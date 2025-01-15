@@ -97,13 +97,13 @@ hello :-
 initialize :-
     blank_mark(E),
     asserta( Board (
-    [   [e,e,e,e,e,e],
-        [e,e,e,e,e,e],
-        [e,e,e,e,e,e],
-        [e,e,e,e,e,e],
-        [e,e,e,e,e,e],
-        [e,e,e,e,e,e],
-        [e,e,e,e,e,e]]) )  %%% create a blank board
+    [   [E,E,E,E,E,E],
+        [E,E,E,E,E,E],
+        [E,E,E,E,E,E],
+        [E,E,E,E,E,E],
+        [E,E,E,E,E,E],
+        [E,E,E,E,E,E],
+        [E,E,E,E,E,E]]) )  %%% create a blank board
     .
 
 goodbye :-
