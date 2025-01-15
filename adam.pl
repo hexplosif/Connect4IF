@@ -35,7 +35,6 @@ Et ça affiche :
 output_board(Board) :-
     nl,
     output_rows(Board, 6), % On commence par la 6ème ligne (le bas) sinon ça s'affiche à l'envert
-    nl,
     output_column_numbers, % Affiche les numéros de colonnes
     nl.
 
@@ -43,7 +42,6 @@ output_board(Board) :-
 output_rows(_, 0) :- !.
 output_rows(Board, Row) :-
     output_row(Board, Row),
-    nl,
     NextRow is Row - 1,
     output_rows(Board, NextRow).
 
@@ -69,5 +67,5 @@ output_square(Cell) :-
 
 % Affiche les numéros des colonnes (1 à 7)
 output_column_numbers :-
-    write('---------------'), nl.
+    write('---------------'), nl,
     write(' 1 2 3 4 5 6 7'), nl.
