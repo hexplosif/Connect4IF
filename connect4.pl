@@ -379,3 +379,18 @@ output_square(Cell) :-
 output_column_numbers :-
     write('---------------'), nl,
     write(' 1 2 3 4 5 6 7'), nl.
+
+
+
+%.......................................
+% generate random number for the AI to play
+% random_int_1n
+%.......................................
+% returns a random integer from 1 to N
+%
+random_int_1n(N, V) :-
+    V is random(N) + 1,
+    !
+    .
+%how to call the function
+%random_int_1n(7,R).
