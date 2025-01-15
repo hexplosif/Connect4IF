@@ -11,7 +11,7 @@ SCHLEE Adam
 STEPHAN Justine
 
 
-#Main functions:
+## Main functions:
 
 run: pour lancer le programme. Initialise le plateau, démarre une partie. (fonction à appeler par l'utilisateur pour jouer).  
 initialize : crée un plateau vide  
