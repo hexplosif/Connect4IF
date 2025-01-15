@@ -2,6 +2,11 @@
 %%% IHM
 %%%%%%%%%%%%%%%%%%%%%%
 
+/* 
+nth1(i, liste, element)
+Ça met dans élément la ième valeur de la liste
+*/
+
 % Affiche le plateau de jeu
 output_board(Board) :-
     nl,
