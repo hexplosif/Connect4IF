@@ -62,13 +62,12 @@ hello :-
     nl,
     nl,
     nl,
-    write('Welcome to Tic-Tac-Toe.'),
+    write('Welcome to Connect4IF.'),
     read_players,
     output_players
     .
 
 initialize :-
-    random_seed,          %%% use current time to initialize random number generator
     blank_mark(E),
     asserta( Board (
     [   [e,e,e,e,e,e],
@@ -89,7 +88,7 @@ goodbye :-
     retract(board(_)),
     retract(player(_,_)),
     read_play_again(V), !,
-    (V == 'Y' ; V == 'y'), 
+    (V == 'y'), 
     !,
     run
     .
@@ -97,15 +96,15 @@ goodbye :-
 read_play_again(V) :-
     nl,
     nl,
-    write('Play again (Y/N)? '),
+    write('Play again (y/n)? '),
     read(V),
-    (V == 'y' ; V == 'Y' ; V == 'n' ; V == 'N'), !
+    (V == 'y' ; V == 'n'), !
     .
 
 read_play_again(V) :-
     nl,
     nl,
-    write('Please enter Y or N.'),
+    write('Please enter y or n.'),
     read_play_again(V)
     .
 
@@ -139,4 +138,57 @@ set_players(N) :-
     nl,
     write('Please enter 0, 1, or 2.'),
     read_players
+    .
+
+human_playing(M) :- 
+    (M == 'x'),
+    asserta( player(1, human) ),
+    asserta( player(2, computer) ), !
+    .
+
+human_playing(M) :- 
+    (M == 'o'),
+    asserta( player(1, computer) ),
+    asserta( player(2, human) ), !
+    .
+
+human_playing(M) :-
+    nl,
+    write('Please enter x or o.'),
+    set_players(1)
+    .
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% OUTPUT
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+output_players :- 
+    nl,
+    player(1, V1),
+    write('Player 1 is '),   %%% either human or computer
+    write(V1),
+
+    nl,
+    player(2, V2),
+    write('Player 2 is '),   %%% either human or computer
+    write(V2), 
+    !
+    .
+
+output_winner(B) :-
+    win(B,x),
+    write('X wins.'),
+    !
+    .
+
+output_winner(B) :-
+    win(B,o),
+    write('O wins.'),
+    !
+    .
+
+output_winner(B) :-
+    write('No winner.')
     .
