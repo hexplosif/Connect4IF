@@ -259,12 +259,21 @@ make_move2(computer, P, B, B2) :-
 % move
 %.......................................
 % applies a move on the given board
-% (put mark M in square S on board B and return the resulting board B2)
+% (put mark M in column S on board B and return the resulting board B2)
 %
+place_in_column([_|Rest], M, [M|Rest]) :- !.  % Replace the first empty slot with M.
+place_in_column([H|T], M, [H|NewT]) :-
+    place_in_column(T, M, NewT).  % Recurse until an empty slot is found.
+replace_column([_|T], 1, NewCol, [NewCol|T]) :- !.  % Replace the first column (Nth = 1).
+replace_column([H|T], N, NewCol, [H|NewT]) :-
+    N > 1,
+    N1 is N - 1,
+    replace_column(T, N1, NewCol, NewT).  % Recurse to find the correct column.
 
-move(B,S,M,B2) :-
-    set_item(B,S,M,B2)
-    .
+move(Board, ColNum, M, NewBoard) :-
+    nth1(ColNum, Board, Col),  % Get the `ColNum`th column from the board.
+    place_in_column(Col, M, NewCol),  % Place the mark `M` in the column.
+    replace_column(Board, ColNum, NewCol, NewBoard).  % Update the board with the new column.
 
 
 %.......................................
