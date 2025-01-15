@@ -254,6 +254,52 @@ make_move2(computer, P, B, B2) :-
     write('.')
     .
 
+%.......................................
+% rectangle
+%.......................................
+% retrieves all the top values of the columns in a given board that are M
+%
+
+rectangle(B, Col, M) :- 
+    nth1(Col, B, RowList),  % get the column
+    nth1(6, RowList, M).    % checks if top of column is M
+
+
+%.......................................
+% minimax
+%.......................................
+% The minimax algorithm always assumes an optimal opponent.
+
+% The best opening move is always dead center.
+
+minimax(D,[ [E,E,E,E,E,E], 
+            [E,E,E,E,E,E], 
+            [E,E,E,E,E,E], 
+            [E,E,E,E,E,E], 
+            [E,E,E,E,E,E], 
+            [E,E,E,E,E,E], 
+            [E,E,E,E,E,E] ],
+            M,S,U) :-   
+    blank_mark(E),
+    S = 4,
+    !.
+
+minimax(D,B,M,S,U) :-
+    D2 is D + 1,
+    moves(B,L),          %%% get the list of available moves
+    !,
+    best(D2,B,M,L,S,U),  %%% recursively determine the best available move
+    !
+    .
+
+% if there are no more available moves, 
+% then the minimax value is the utility of the given board position
+
+minimax(D,B,M,S,U) :-
+    utility(B,U)      
+    .
+
+
 
 %.......................................
 % move
