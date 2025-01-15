@@ -135,7 +135,6 @@ read_play_again(V) :-
     read_play_again(V)
     .
 
-
 read_players :-
     nl,
     nl,
