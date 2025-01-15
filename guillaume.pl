@@ -37,12 +37,6 @@ blank_mark('e').        %%% the mark used in an empty square
 maximizing('x').        %%% the player playing x is always trying to maximize the utility of the board position
 minimizing('o').        %%% the player playing o is always trying to minimize the utility of the board position
 
-corner_square(1, 1).    %%% map corner squares to board squares
-corner_square(2, 3).
-corner_square(3, 7).
-corner_square(4, 9).
-
-
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -65,7 +59,6 @@ run :-
 
 hello :-
     initialize,
-%    cls,
     nl,
     nl,
     nl,
@@ -77,7 +70,14 @@ hello :-
 initialize :-
     random_seed,          %%% use current time to initialize random number generator
     blank_mark(E),
-    asserta( board([E,E,E, E,E,E, E,E,E]) )  %%% create a blank board
+    asserta( Board (
+    [   [e,e,e,e,e,e],
+        [e,e,e,e,e,e],
+        [e,e,e,e,e,e],
+        [e,e,e,e,e,e],
+        [e,e,e,e,e,e],
+        [e,e,e,e,e,e],
+        [e,e,e,e,e,e]]) )  %%% create a blank board
     .
 
 goodbye :-
