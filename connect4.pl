@@ -186,40 +186,6 @@ human_playing(M) :-
     .
 
 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% OUTPUT
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-output_players :- 
-    nl,
-    player(1, V1),
-    write('Player 1 is '),   %%% either human or computer
-    write(V1),
-
-    nl,
-    player(2, V2),
-    write('Player 2 is '),   %%% either human or computer
-    write(V2), 
-    !
-    .
-
-output_winner(B) :-
-    win(B,x),
-    write('X wins.'),
-    !
-    .
-
-output_winner(B) :-
-    win(B,o),
-    write('O wins.'),
-    !
-    .
-
-output_winner(B) :-
-    write('No winner.')
-    .
-
 %.......................................
 % play
 %.......................................
@@ -327,6 +293,40 @@ set_item2( [_|T1], N, V, A, [V|T2] ) :-
 set_item2( [H|T1], N, V, A, [H|T2] ) :- 
     A1 is A + 1, 
     set_item2( T1, N, V, A1, T2 )
+    .
+    
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% OUTPUT
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+output_players :- 
+    nl,
+    player(1, V1),
+    write('Player 1 is '),   %%% either human or computer
+    write(V1),
+
+    nl,
+    player(2, V2),
+    write('Player 2 is '),   %%% either human or computer
+    write(V2), 
+    !
+    .
+
+output_winner(B) :-
+    win(B,x),
+    write('X wins.'),
+    !
+    .
+
+output_winner(B) :-
+    win(B,o),
+    write('O wins.'),
+    !
+    .
+
+output_winner(B) :-
+    write('No winner.')
     .
 
 %.......................................
