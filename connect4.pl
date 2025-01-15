@@ -219,3 +219,163 @@ output_winner(B) :-
 output_winner(B) :-
     write('No winner.')
     .
+
+%.......................................
+% play
+%.......................................
+% main function
+
+play(P) :-
+    board(B), !,
+    output_board(B), !,
+    not(game_over(P, B)), !,
+    make_move(P, B), !,
+    next_player(P, P2), !,
+    play(P2), !
+    .
+
+
+%.......................................
+% make_move
+%.......................................
+% requests next move from human/computer, 
+% then applies that move to the given board
+%
+
+make_move(P, B) :-
+    player(P, Type),
+
+    make_move2(Type, P, B, B2),
+
+    retract( board(_) ),
+    asserta( board(B2) )
+    .
+
+make_move2(human, P, B, B2) :-
+    nl,
+    nl,
+    write('Player '),
+    write(P),
+    write(' move? '),
+    read(S),
+
+    blank_mark(E),
+    square(B, S, E),
+    player_mark(P, M),
+    move(B, S, M, B2), !
+    .
+
+make_move2(human, P, B, B2) :-
+    nl,
+    nl,
+    write('Please select a numbered square.'),
+    make_move2(human,P,B,B2)
+    .
+
+make_move2(computer, P, B, B2) :-
+    nl,
+    nl,
+    write('Computer is thinking about next move...'),
+    player_mark(P, M),
+    minimax(0, B, M, S, U),
+    move(B,S,M,B2),
+
+    nl,
+    nl,
+    write('Computer places '),
+    write(M),
+    write(' in square '),
+    write(S),
+    write('.')
+    .
+
+
+%.......................................
+% move
+%.......................................
+% applies a move on the given board
+% (put mark M in square S on board B and return the resulting board B2)
+%
+
+move(B,S,M,B2) :-
+    set_item(B,S,M,B2)
+    .
+
+
+%.......................................
+% set_item
+%.......................................
+% Given a list L, replace the item at position N with V
+% return the new list in list L2
+%
+
+set_item(L, N, V, L2) :-
+    set_item2(L, N, V, 1, L2)
+        .
+
+set_item2( [], N, V, A, L2) :- 
+    N == -1, 
+    L2 = []
+    .
+
+set_item2( [_|T1], N, V, A, [V|T2] ) :- 
+    A = N,
+    A1 is N + 1,
+    set_item2( T1, -1, V, A1, T2 )
+    .
+
+set_item2( [H|T1], N, V, A, [H|T2] ) :- 
+    A1 is A + 1, 
+    set_item2( T1, N, V, A1, T2 )
+    .
+
+%.......................................
+% Affiche le plateau de jeu
+%.......................................
+output_board(Board) :-
+    nl,
+    output_rows(Board, 6), % On commence par la 6ème ligne (le bas) sinon ça s'affiche à l'envert
+    output_column_numbers, % Affiche les numéros de colonnes
+    nl.
+
+%.......................................
+% Affiche les lignes du bas vers le haut
+%.......................................
+output_rows(_, 0) :- !.
+output_rows(Board, Row) :-
+    output_row(Board, Row),
+    NextRow is Row - 1,
+    output_rows(Board, NextRow).
+
+%.......................................
+% Affiche une ligne donnée
+%.......................................
+output_row(Board, Row) :-
+    write('|'),
+    output_cells(Board, Row, 1).
+
+%.......................................
+% Parcourt les colonnes et affiche la cellule correspondante
+%.......................................
+output_cells(_, _, 8) :-
+    nl, !.
+output_cells(Board, Row, Col) :-
+    nth1(Col, Board, Column), % Récupère la colonne actuelle
+    nth1(Row, Column, Cell), % Récupère la cellule (contenu) à la ligne Row
+    output_square(Cell), % Affiche le contenu de la cellule
+    write('|'),
+    NextCol is Col + 1,
+    output_cells(Board, Row, NextCol).
+
+%.......................................
+% Affiche une cellule (X, O, ou vide)
+%.......................................
+output_square(Cell) :-
+    (var(Cell) -> write(' '); write(Cell)), !. % Affiche un espace si la cellule est vide, sinon affiche le contenu (X, O, etc.)
+
+%.......................................
+% Affiche les numéros des colonnes (1 à 7)
+%.......................................
+output_column_numbers :-
+    write('---------------'), nl,
+    write(' 1 2 3 4 5 6 7'), nl.
