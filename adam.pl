@@ -61,9 +61,19 @@ output_cells(Board, Row, Col) :-
     NextCol is Col + 1,
     output_cells(Board, Row, NextCol).
 
+
 % Affiche une cellule (X, O, ou vide)
-output_square(Cell) :-
-    (var(Cell) -> write(' '); write(Cell)), !. % Affiche un espace si la cellule est vide, sinon affiche le contenu (X, O, etc.)
+% Si la cellule est vide, affiche un espace
+% Sinon, si la cellule est un X, affiche en rouge
+% Sinon, si la cellule est un O, affiche en bleu
+output_square(X) :-
+    X == x, !,
+    ansi_format([fg(red)], 'x', []). % Affiche un X en rouge
+output_square(O) :-
+    O == o, !,
+    ansi_format([fg(blue)], 'o', []). % Affiche un O en bleu
+output_square(_) :-
+    write(' '). % Affiche un espace
 
 % Affiche les numéros des colonnes (1 à 7)
 output_column_numbers :-
