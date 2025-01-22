@@ -26,3 +26,8 @@ vertical_win(Board, M) :-
 win(B, M) :- 
     horizontal_win(B, M);
     vertical_win(B, M).
+
+% run :-
+%     M1 = ['x','x','x','x'],
+%     append([_, M1, _], ['x','x','x','x','e','x','x']),
+%     write(M1).
