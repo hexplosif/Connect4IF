@@ -76,24 +76,18 @@ minimizing('o').        %%% the player playing o is always trying to minimize th
 
 run :-
     hello,          %%% Display welcome message, initialize game
-
     play(1),        %%% Play the game starting with player 1
-
-    goodbye         %%% Display end of game message
-    .
+    goodbye.        %%% Display end of game message
 
 run :-
-    goodbye
-    .
-
+    goodbye.
 
 hello :-
     initialize,
     nl, nl, nl,
     write('Welcome to Connect4IF.'),
     read_players,
-    output_players
-    .
+    output_players.
 
 initialize :-
     blank_mark(E),
@@ -117,72 +111,60 @@ goodbye :-
     retract(board(_)),
     retract(player(_,_)),
     read_play_again(V), !,
-    (V == 'y'), 
-    !,
-    run
-    .
+    (V == 'y'), !,
+    run.
 
 % l'ordinateur lit les prédicats dans l'ordre. Quand il rencontre un ! il s'arrête et passe au prédicat suivant
 read_play_again(V) :-
     nl, nl,
     write('Play again (y/n)? '),
     read(V),
-    (V == 'y' ; V == 'n'), !
-    .
+    (V == 'y' ; V == 'n'), !.
 
 read_play_again(V) :-
     nl, nl,
     write('Please enter y or n.'),
-    read_play_again(V) %appelle le premier prédicat qui a ce nom
-    .
+    read_play_again(V). %appelle le premier prédicat qui a ce nom
 
 read_players :-
     nl, nl,
     write('Number of human players? '),
     read(N),
-    set_players(N)
-    .
+    set_players(N).
 
 set_players(0) :- 
     asserta( player(1, computer) ),
-    asserta( player(2, computer) ), !
-    .
+    asserta( player(2, computer) ), !.
 
 set_players(1) :-
     nl,
     write('Is human playing X or O (X moves first)? '),
     read(M),
-    human_playing(M), !
-    .
+    human_playing(M), !.
 
 set_players(2) :- 
     asserta( player(1, human) ),
-    asserta( player(2, human) ), !
-    .
+    asserta( player(2, human) ), !.
 
 set_players(_) :-
     nl,
     write('Please enter 0, 1, or 2.'),
-    read_players
-    .
+    read_players.
 
 human_playing(M) :- 
     (M == 'x'),
     asserta( player(1, human) ),
-    asserta( player(2, computer) ), !
-    .
+    asserta( player(2, computer) ), !.
 
 human_playing(M) :- 
     (M == 'o'),
     asserta( player(1, computer) ),
-    asserta( player(2, human) ), !
-    .
+    asserta( player(2, human) ), !.
 
 human_playing(_) :-
     nl,
     write('Please enter x or o.'),
-    set_players(1)
-    .
+    set_players(1).
 
 
 %.......................................
@@ -199,13 +181,11 @@ play(P) :-
     play(P2), !
     .
 
-
 %.......................................
 % make_move
 %.......................................
 % Requests the next move from human/computer, 
 % then applies that move to the given board.
-%
 
 make_move(P, B) :-
     player(P, Type),
@@ -221,8 +201,7 @@ make_move2(human, P, B, B2) :-
     moves(B, AvailableMoves),             % Get the list of available moves.
     member(S, AvailableMoves),            % Check if the selected square is valid.
     player_mark(P, M),
-    move(B, S, M, B2),                    % Apply the move to the board.
-    !.                                    % Cut to prevent backtracking.
+    move(B, S, M, B2), !.                   % Apply the move to the board and cuts to prevent backtracking
 
 % Handle invalid move by human player.
 make_move2(human, P, B, B2) :-
@@ -235,10 +214,9 @@ make_move2(computer, P, B, B2) :-
     nl, nl,
     write('Computer is thinking about its next move...'),
     player_mark(P, M),
-    random_int_1n(7,S), %version 1: l'odinateur joue au hasard
+    random_int_1n(7, S), %version 1: l'odinateur joue au hasard
     % minimax(0, B, M, S, U),
     move(B, S, M, B2),
-
     nl, nl,
     write('Computer places '), write(M),
     write(' in square '), write(S), write('.').
@@ -278,40 +256,17 @@ minimax(D,[ [E,E,E,E,E,E],
             [E,E,E,E,E,E] ],
             M,S,U) :-   
     blank_mark(E),
-    S = 4,
-    !.
+    S = 4, !.
 
 minimax(D,B,M,S,U) :-
     D2 is D + 1,
-    moves(B,L),          %%% get the list of available moves
-    !,
-    best(D2,B,M,L,S,U),  %%% recursively determine the best available move
-    !
-    .
+    moves(B,L), !,          %%% get the list of available moves
+    best(D2,B,M,L,S,U), !.  %%% recursively determine the best available move
 
 % if there are no more available moves, 
 % then the minimax value is the utility of the given board position
 minimax(D,B,M,S,U) :-
-    utility(B,U)      
-    .
-
-%.......................................
-% place in column
-%.......................................
-% appends the Mark in a column
-place_in_column([_|Rest], M, [M|Rest]) :- !.  % Replace the first empty slot with M.
-place_in_column([H|T], M, [H|NewT]) :-
-    place_in_column(T, M, NewT).  % Recurse until an empty slot is found.
-
-%.......................................
-% replace column
-%.......................................
-% replaces an entier column in a board
-replace_column([_|T], 1, NewCol, [NewCol|T]) :- !.  % Replace the first column (Nth = 1).
-replace_column([H|T], N, NewCol, [H|NewT]) :-
-    N > 1,
-    N1 is N - 1,
-    replace_column(T, N1, NewCol, NewT).  % Recurse to find the correct column.
+    utility(B,U).
 
 %.......................................
 % move
@@ -323,6 +278,18 @@ move(board, ColNum, M, NewBoard) :-
     place_in_column(Col, M, NewCol),  % Place the mark `M` in the column.
     replace_column(board, ColNum, NewCol, NewBoard).  % Update the board with the new column.
 
+% appends the Mark in a column
+place_in_column([_|Rest], M, [M|Rest]) :- !.  % Replace the first empty slot with M.
+place_in_column([H|T], M, [H|NewT]) :-
+    place_in_column(T, M, NewT).  % Recurse until an empty slot is found.
+
+% replaces an entier column in a board
+replace_column([_|T], 1, NewCol, [NewCol|T]) :- !.  % Replace the first column (Nth = 1).
+replace_column([H|T], N, NewCol, [H|NewT]) :-
+    N > 1,
+    N1 is N - 1,
+    replace_column(T, N1, NewCol, NewT).  % Recurse to find the correct column.
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% OUTPUT
@@ -331,31 +298,21 @@ move(board, ColNum, M, NewBoard) :-
 output_players :- 
     nl,
     player(1, V1),
-    write('Player 1 is '),   %%% either human or computer
-    write(V1),
-
+    write('Player 1 is '), write(V1),  %%% either human or computer
     nl,
     player(2, V2),
-    write('Player 2 is '),   %%% either human or computer
-    write(V2), 
-    !
-    .
+    write('Player 2 is '), write(V2), !.  %%% either human or computer
 
 output_winner(B) :-
     win(B,x),
-    write('X wins.'),
-    !
-    .
+    write('X wins.'), !.
 
 output_winner(B) :-
     win(B,o),
-    write('O wins.'),
-    !
-    .
+    write('O wins.'), !.
 
 output_winner(_) :-
-    write('No winner.')
-    .
+    write('No winner.').
 
 %.......................................
 % Affiche le plateau de jeu
@@ -418,10 +375,6 @@ output_column_numbers :-
 % random_int_1n
 %.......................................
 % returns a random integer from 1 to N
-%
+% eg : random_int_1n(7,R).
 random_int_1n(N, V) :-
-    V is random(N) + 1,
-    !
-    .
-%how to call the function
-%random_int_1n(7,R).
+    V is random(N) + 1, !.
