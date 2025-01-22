@@ -8,6 +8,13 @@ swipl-win adamEnMieux.pl
 
 Puis dans SWI-Prolog, tapez:
 start.
+
+Single letter variables represent:
+B: Board
+X: X coordinate
+Y: Y coordinate
+N: Number of circles
+
 */
 
 :- use_module(library(pce)).
@@ -67,28 +74,28 @@ add_colored_circles(Menu, N, Counter) :-
 
 
 % Crée une fenêtre pour afficher le plateau
-create_board_window(Board) :-
+create_board_window(B) :-
     new(Window, picture('Connect4IF')),
     send(Window, size, size(720, 700)),
     send(Window, open),
     send(Window, background, colour(black)),
-    draw_board(Window, Board, 6, 7).
+    draw_board(Window, B, 6, 7).
 
 % Démarre le jeu selon le mode sélectionné
 start_game(Mode) :-
     format('Mode choisi: ~w~n', [Mode]),
-    Board = [[x, o, _, _, _, _],
-             [x, x, _, _, _, _],
-             [o, o, _, _, _, _],
-             [_, _, _, _, _, _],
-             [o, _, _, _, _, _],
-             [x, _, _, _, _, _],
-             [_, _, _, _, _, _]],
-    create_board_window(Board).
+    B = [[x, o, _, _, _, _],
+         [x, x, _, _, _, _],
+         [o, o, _, _, _, _],
+         [_, _, _, _, _, _],
+         [o, _, _, _, _, _],
+         [x, _, _, _, _, _],
+         [_, _, _, _, _, _]],
+    create_board_window(B).
 
 % Dessine le plateau sur la fenêtre
-draw_board(Window, Board, Rows, Cols) :-
-    draw_cells(Window, Board, Rows, Cols, Rows, 1),
+draw_board(Window, B, Rows, Cols) :-
+    draw_cells(Window, B, Rows, Cols, Rows, 1),
     draw_buttons(Window, Cols).
 
 % Dessine les boutons pour chaque colonne, sous le plateau
@@ -113,33 +120,33 @@ play_move(Window, Col) :-
 
 % Met à jour le plateau et le réaffiche
 update_board(Window, Col) :-
-    Board = [[x, o, _, _, _, _],
-             [x, x, _, _, _, _],
-             [o, o, _, _, _, _],
-             [_, _, _, _, _, _],
-             [o, o, _, _, _, _],
-             [x, _, _, _, _, _],
-             [_, _, _, _, _, _]],
+    B = [[x, o, _, _, _, _],
+         [x, x, _, _, _, _],
+         [o, o, _, _, _, _],
+         [_, _, _, _, _, _],
+         [o, o, _, _, _, _],
+         [x, _, _, _, _, _],
+         [_, _, _, _, _, _]],
     send(Window, clear), % Efface le contenu précédent de la fenêtre
-    draw_board(Window, Board, 6, 7).
+    draw_board(Window, B, 6, 7).
 
 % Parcourt les cellules pour les dessiner
 draw_cells(_, _, 0, _, _, _) :- !.
-draw_cells(Window, Board, Row, Cols, TotalRows, TotalCols) :-
-    draw_row(Window, Board, Row, Cols, TotalRows, TotalCols),
+draw_cells(Window, B, Row, Cols, TotalRows, TotalCols) :-
+    draw_row(Window, B, Row, Cols, TotalRows, TotalCols),
     NextRow is Row - 1,
-    draw_cells(Window, Board, NextRow, Cols, TotalRows, TotalCols).
+    draw_cells(Window, B, NextRow, Cols, TotalRows, TotalCols).
 
 % Dessine une ligne donnée
 draw_row(_, _, _, 0, _, _) :- !.
-draw_row(Window, Board, Row, Col, TotalRows, TotalCols) :-
-    nth1(Col, Board, Column),
+draw_row(Window, B, Row, Col, TotalRows, TotalCols) :-
+    nth1(Col, B, Column),
     nth1(Row, Column, Cell),
     CellY is (TotalRows - Row) * 100 + 30,
     CellX is (Col - 1) * 100 + 30,
     draw_cell(Window, Cell, CellX, CellY),
     NextCol is Col - 1,
-    draw_row(Window, Board, Row, NextCol, TotalRows, TotalCols).
+    draw_row(Window, B, Row, NextCol, TotalRows, TotalCols).
 
 % Dessine une cellule donnée
 draw_cell(Window, Cell, X, Y) :-
