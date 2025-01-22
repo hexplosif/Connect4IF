@@ -70,6 +70,9 @@ minimizing('o').        %%% the player playing o is always trying to minimize th
 %%%     MAIN PROGRAM
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%.......................................
+% Initialization & manage I/O
+%.......................................
 
 run :-
     hello,          %%% Display welcome message, initialize game
@@ -120,6 +123,7 @@ goodbye :-
     run
     .
 
+% l'ordinateur lit les prédicats dans l'ordre. Quand il rencontre un ! il s'arrête et passe au prédicat suivant
 read_play_again(V) :-
     nl,
     nl,
@@ -132,7 +136,7 @@ read_play_again(V) :-
     nl,
     nl,
     write('Please enter y or n.'),
-    read_play_again(V)
+    read_play_again(V) %appelle le premier prédicat qui a ce nom
     .
 
 read_players :-
@@ -241,8 +245,9 @@ make_move2(computer, P, B, B2) :-
     nl,
     nl,
     write('Computer is thinking about next move...'),
-    player_mark(P, M),
-    minimax(0, B, M, S, U),
+    player_mark(P, M),    
+    random_int_1n(7,S), %version 1: l'odinateur joue au hasard
+    %minimax(0, B, M, S, U),
     move(B,S,M,B2),
 
     nl,
