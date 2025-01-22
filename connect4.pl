@@ -89,9 +89,7 @@ run :-
 
 hello :-
     initialize,
-    nl,
-    nl,
-    nl,
+    nl, nl, nl,
     write('Welcome to Connect4IF.'),
     read_players,
     output_players
@@ -99,20 +97,21 @@ hello :-
 
 initialize :-
     blank_mark(E),
-    asserta( Board (
-    [   [E,E,E,E,E,E],
-        [E,E,E,E,E,E],
-        [E,E,E,E,E,E],
-        [E,E,E,E,E,E],
-        [E,E,E,E,E,E],
-        [E,E,E,E,E,E],
-        [E,E,E,E,E,E]]) )  %%% create a blank board
-    .
+    asserta(
+        board([
+            [E, E, E, E, E, E],
+            [E, E, E, E, E, E],
+            [E, E, E, E, E, E],
+            [E, E, E, E, E, E],
+            [E, E, E, E, E, E],
+            [E, E, E, E, E, E],
+            [E, E, E, E, E, E]
+        ])
+    ).  %%% create a blank board
 
 goodbye :-
     board(B),
-    nl,
-    nl,
+    nl, nl,
     write('Game over: '),
     output_winner(B),
     retract(board(_)),
@@ -125,23 +124,20 @@ goodbye :-
 
 % l'ordinateur lit les prédicats dans l'ordre. Quand il rencontre un ! il s'arrête et passe au prédicat suivant
 read_play_again(V) :-
-    nl,
-    nl,
+    nl, nl,
     write('Play again (y/n)? '),
     read(V),
     (V == 'y' ; V == 'n'), !
     .
 
 read_play_again(V) :-
-    nl,
-    nl,
+    nl, nl,
     write('Please enter y or n.'),
     read_play_again(V) %appelle le premier prédicat qui a ce nom
     .
 
 read_players :-
-    nl,
-    nl,
+    nl, nl,
     write('Number of human players? '),
     read(N),
     set_players(N)
@@ -164,7 +160,7 @@ set_players(2) :-
     asserta( player(2, human) ), !
     .
 
-set_players(N) :-
+set_players(_) :-
     nl,
     write('Please enter 0, 1, or 2.'),
     read_players
@@ -182,7 +178,7 @@ human_playing(M) :-
     asserta( player(2, human) ), !
     .
 
-human_playing(M) :-
+human_playing(_) :-
     nl,
     write('Please enter x or o.'),
     set_players(1)
@@ -245,7 +241,7 @@ make_move2(computer, P, B, B2) :-
 
     nl, nl,
     write('Computer places '), write(M),
-    write(' in square '), write(S), write('.')    .
+    write(' in square '), write(S), write('.').
 
 %.......................................
 % moves
@@ -322,10 +318,10 @@ replace_column([H|T], N, NewCol, [H|NewT]) :-
 %.......................................
 % applies a move on the given board
 % (put mark M in column S on board B and return the resulting board B2)
-move(Board, ColNum, M, NewBoard) :-
-    nth1(ColNum, Board, Col),  % Get the `ColNum`th column from the board.
+move(board, ColNum, M, NewBoard) :-
+    nth1(ColNum, board, Col),  % Get the `ColNum`th column from the board.
     place_in_column(Col, M, NewCol),  % Place the mark `M` in the column.
-    replace_column(Board, ColNum, NewCol, NewBoard).  % Update the board with the new column.
+    replace_column(board, ColNum, NewCol, NewBoard).  % Update the board with the new column.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -357,16 +353,16 @@ output_winner(B) :-
     !
     .
 
-output_winner(B) :-
+output_winner(_) :-
     write('No winner.')
     .
 
 %.......................................
 % Affiche le plateau de jeu
 %.......................................
-output_board(Board) :-
+output_board(board) :-
     nl,
-    output_rows(Board, 6), % On commence par la 6ème ligne (le bas) sinon ça s'affiche à l'envert
+    output_rows(board, 6), % On commence par la 6ème ligne (le bas) sinon ça s'affiche à l'envert
     output_column_numbers, % Affiche les numéros de colonnes
     nl.
 
@@ -374,30 +370,30 @@ output_board(Board) :-
 % Affiche les lignes du bas vers le haut
 %.......................................
 output_rows(_, 0) :- !.
-output_rows(Board, Row) :-
-    output_row(Board, Row),
+output_rows(board, Row) :-
+    output_row(board, Row),
     NextRow is Row - 1,
-    output_rows(Board, NextRow).
+    output_rows(board, NextRow).
 
 %.......................................
 % Affiche une ligne donnée
 %.......................................
-output_row(Board, Row) :-
+output_row(board, Row) :-
     write('|'),
-    output_cells(Board, Row, 1).
+    output_cells(board, Row, 1).
 
 %.......................................
 % Parcourt les colonnes et affiche la cellule correspondante
 %.......................................
 output_cells(_, _, 8) :-
     nl, !.
-output_cells(Board, Row, Col) :-
-    nth1(Col, Board, Column), % Récupère la colonne actuelle
+output_cells(board, Row, Col) :-
+    nth1(Col, board, Column), % Récupère la colonne actuelle
     nth1(Row, Column, Cell), % Récupère la cellule (contenu) à la ligne Row
     output_square(Cell), % Affiche le contenu de la cellule
     write('|'),
     NextCol is Col + 1,
-    output_cells(Board, Row, NextCol).
+    output_cells(board, Row, NextCol).
 
 %.......................................
 % Affiche une cellule (X, O, ou vide)
