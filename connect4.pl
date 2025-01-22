@@ -84,7 +84,7 @@ run :-
 
 hello :-
     initialize,
-    nl, nl, nl,
+    nl, nl,
     write('Welcome to Connect4IF.'),
     read_players,
     output_players.
@@ -138,7 +138,7 @@ set_players(0) :-
 
 set_players(1) :-
     nl,
-    write('Is human playing X or O (X moves first)? '),
+    write('Is human playing x or o (x moves first)? '),
     read(M),
     human_playing(M), !.
 
@@ -229,7 +229,7 @@ moves(B, L) :-
     \+ win(B, x),                         % If either player has already won, there are no valid moves.
     \+ win(B, o),
     blank_mark(E),
-    findall(N, square(B, N, E), L),       % Find all blank squares.
+    findall(N, rectangle(B,N,E), L), 
     L \= [].                              % Ensure the list of moves is not empty.
 
 
@@ -240,6 +240,56 @@ moves(B, L) :-
 rectangle(B, Col, M) :- 
     nth1(Col, B, Column),                 % Get the column at position Col.
     nth1(6, Column, M).                   % Check the topmost value of the column.
+
+%.......................................
+% win
+%.......................................
+
+isconsecutive(List, Player, Length) :-
+    length(SubList, Length),
+    append(_, SubListRest, List),
+    append(SubList, _, SubListRest),
+    maplist(=(Player), SubList).
+
+transpose([], []).
+transpose([[] | _], []).
+transpose(Matrix, [Row | TransposedTail]) :-
+    extract_column(Matrix, Row, RestMatrix),
+    transpose(RestMatrix, TransposedTail).
+
+extract_column([], [], []).
+extract_column([[H | T] | Rows], [H | Column], [T | RestRows]) :-
+    extract_column(Rows, Column, RestRows).
+
+horizontal_win(B, M) :- 
+    member(Row, B),
+    isconsecutive(Row, M, 4).
+
+vertical_win(B, M) :- 
+    transpose(B, TB),
+    member(Row, TB),
+    isconsecutive(Row, M, 4).
+
+win(B, M) :- 
+    horizontal_win(B, M);
+    vertical_win(B, M).
+
+%.......................................
+% game_over
+%.......................................
+% determines when the game is over
+game_over(P, B) :-
+    game_over2(P, B).
+
+% game is over if opponent wins
+game_over2(P, B) :-
+    opponent_mark(P, M),
+    win(B, M).
+
+% game is over if there are no blank squares left
+game_over2(P, B) :-
+    moves(B, L),
+    L == [].
 
 %.......................................
 % minimax
@@ -273,15 +323,16 @@ minimax(D,B,M,S,U) :-
 %.......................................
 % applies a move on the given board
 % (put mark M in column S on board B and return the resulting board B2)
-move(board, ColNum, M, NewBoard) :-
-    nth1(ColNum, board, Col),  % Get the `ColNum`th column from the board.
+move(B, ColNum, M, Newboard) :-
+    nth1(ColNum, B, Col),  % Get the `ColNum`th column from the board.
     place_in_column(Col, M, NewCol),  % Place the mark `M` in the column.
-    replace_column(board, ColNum, NewCol, NewBoard).  % Update the board with the new column.
+    replace_column(B, ColNum, NewCol, Newboard).  % Update the board with the new column.
 
-% appends the Mark in a column
-place_in_column([_|Rest], M, [M|Rest]) :- !.  % Replace the first empty slot with M.
-place_in_column([H|T], M, [H|NewT]) :-
-    place_in_column(T, M, NewT).  % Recurse until an empty slot is found.
+% Place in column - places the mark `M` in the first empty slot in the column.
+place_in_column([E|Rest], M, [M|Rest]) :-  % If the head is empty, place the mark `M`.
+    E == 'e', !. % Only replace empty slot ('e').
+place_in_column([H|T], M, [H|NewT]) :-  % Otherwise, recursively check the tail.
+    place_in_column(T, M, NewT).
 
 % replaces an entier column in a board
 replace_column([_|T], 1, NewCol, [NewCol|T]) :- !.  % Replace the first column (Nth = 1).
@@ -314,53 +365,52 @@ output_winner(B) :-
 output_winner(_) :-
     write('No winner.').
 
-%.......................................
 % Affiche le plateau de jeu
-%.......................................
-output_board(board) :-
+output_board(Board) :-
     nl,
-    output_rows(board, 6), % On commence par la 6ème ligne (le bas) sinon ça s'affiche à l'envert
+    output_rows(Board, 6), % On commence par la 6ème ligne (le bas) sinon ça s'affiche à l'envert
     output_column_numbers, % Affiche les numéros de colonnes
     nl.
 
-%.......................................
 % Affiche les lignes du bas vers le haut
-%.......................................
 output_rows(_, 0) :- !.
-output_rows(board, Row) :-
-    output_row(board, Row),
+output_rows(Board, Row) :-
+    output_row(Board, Row),
     NextRow is Row - 1,
-    output_rows(board, NextRow).
+    output_rows(Board, NextRow).
 
-%.......................................
 % Affiche une ligne donnée
-%.......................................
-output_row(board, Row) :-
+output_row(Board, Row) :-
     write('|'),
-    output_cells(board, Row, 1).
+    output_cells(Board, Row, 1).
 
-%.......................................
 % Parcourt les colonnes et affiche la cellule correspondante
-%.......................................
 output_cells(_, _, 8) :-
     nl, !.
-output_cells(board, Row, Col) :-
-    nth1(Col, board, Column), % Récupère la colonne actuelle
+output_cells(Board, Row, Col) :-
+    nth1(Col, Board, Column), % Récupère la colonne actuelle
     nth1(Row, Column, Cell), % Récupère la cellule (contenu) à la ligne Row
     output_square(Cell), % Affiche le contenu de la cellule
     write('|'),
     NextCol is Col + 1,
-    output_cells(board, Row, NextCol).
+    output_cells(Board, Row, NextCol).
 
-%.......................................
+
 % Affiche une cellule (X, O, ou vide)
-%.......................................
-output_square(Cell) :-
-    (var(Cell) -> write(' '); write(Cell)), !. % Affiche un espace si la cellule est vide, sinon affiche le contenu (X, O, etc.)
+% Si la cellule est vide, affiche un espace
+% Sinon, si la cellule est un X, affiche en rouge
+% Sinon, si la cellule est un O, affiche en bleu
+output_square(X) :-
+    X == x, !,
+    ansi_format([fg(red)], 'x', []). % Affiche un X en rouge
+output_square(O) :-
+    O == o, !,
+    ansi_format([fg(blue)], 'o', []). % Affiche un O en bleu
+output_square(E) :-
+    E == e, !,
+    write(' '). % Affiche un espace
 
-%.......................................
 % Affiche les numéros des colonnes (1 à 7)
-%.......................................
 output_column_numbers :-
     write('---------------'), nl,
     write(' 1 2 3 4 5 6 7'), nl.
