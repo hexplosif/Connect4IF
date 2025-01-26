@@ -44,10 +44,10 @@ asserta( player(P, Type) ) - indicates which players are human/computer.
 */
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%     IMPORTS MODULES
+%%%     MODULES
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-:- use_module(library(pce)). % Import the PCE library for GUI elements
+:- use_module(library(pce)).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%     FACTS
@@ -70,6 +70,8 @@ blank_mark('e').        %%% the mark used in an empty square
 maximizing('x').        %%% the player playing x is always trying to maximize the utility of the board position
 minimizing('o').        %%% the player playing o is always trying to minimize the utility of the board position
 
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%     MAIN PROGRAM
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -79,9 +81,11 @@ minimizing('o').        %%% the player playing o is always trying to minimize th
 %.......................................
 
 run :-
-    hello.          %%% Display welcome message, initialize game
-    %play(1),        %%% Play the game starting with player 1
-    %goodbye.        %%% Display end of game message
+    hello,          %%% Display welcome message, initialize game
+    board(B),       %%% Get the current board
+    create_board_window(W, B), % Create the board window
+    play(1, W),        %%% Play the game starting with player 1
+    goodbye.        %%% Display end of game message
 
 run :-
     goodbye.
@@ -90,7 +94,8 @@ hello :-
     initialize,
     nl, nl,
     write('Welcome to Connect4IF.'),
-    read_players.
+    read_players,
+    output_players.
 
 initialize :-
     blank_mark(E),
@@ -132,22 +137,22 @@ read_play_again(V) :-
 read_players :-
     nl, nl,
     write('Number of human players? '),
-    n_players_window(W).
+    read(N),
+    set_players(N).
 
 set_players(0) :- 
     asserta( player(1, computer) ),
-    asserta( player(2, computer) ),
-    play(1), !.
+    asserta( player(2, computer) ), !.
 
 set_players(1) :-
     nl,
     write('Is human playing x or o (x moves first)? '),
-    choose_mark_window(W), !.
+    read(M),
+    human_playing(M), !.
 
 set_players(2) :- 
     asserta( player(1, human) ),
-    asserta( player(2, human) ),
-    play(1), !.
+    asserta( player(2, human) ), !.
 
 set_players(_) :-
     nl,
@@ -175,24 +180,15 @@ human_playing(_) :-
 %.......................................
 % main function
 
-play(P) :-
-    player(P, Type),
-    Type == human,
-    write('\n--Player type: '), write(Type), nl,
-    board(B),
-    output_board(B),
-    board_window(W, P, B).
-
-play(P) :-
-    player(P, Type),
-    write('\n--Player type: '), write(Type), nl,
-    Type == computer, !,
-    write('\n--Player type: '), write(Type), nl,
-    board(B),
-    output_board(B),
-    make_move(P, B),
-    next_player(P, P2),
-    play(P2).
+play(P, W) :-
+    board(B), !,
+    output_board(B), !,
+    update_board(W, B), !,
+    not(game_over(P, B)), !,
+    make_move(P, B), !,
+    next_player(P, P2), !,
+    play(P2, W), !
+    .
 
 %.......................................
 % make_move
@@ -200,37 +196,27 @@ play(P) :-
 % Requests the next move from human/computer, 
 % then applies that move to the given board.
 
-% Computer player makes a move.
-make_move(P, B) :-   
+make_move(P, B) :-
     player(P, Type),
-    write('\n--Player type: '), write(Type), nl,
     make_move2(Type, P, B, B2),  % Delegate the move based on player type (human or computer).
-    write('\n--Player '), write(P), write(' places '), write(M),
     retract(board(_)),           % Update the current board.
     asserta(board(B2)).
 
 % Human player makes a move.
-make_move(P, B, S) :-   
-    player(P, Type),
-    make_move2(Type, P, S, B, B2),  % Delegate the move based on player type (human or computer).
-    retract(board(_)),           % Update the current board.
-    asserta(board(B2)).
-
-% Human player makes a move.
-make_move2(human, P, S, B, B2) :-
+make_move2(human, P, B, B2) :-
     nl, nl,
-    moves(B, AvailableMoves), 
+    write('Player '), write(P), write(' move? '),
+    read(S),                              % Read the square index from the player.
+    moves(B, AvailableMoves),             % Get the list of available moves.
     member(S, AvailableMoves),            % Check if the selected square is valid.
     player_mark(P, M),
     move(B, S, M, B2), !.                   % Apply the move to the board and cuts to prevent backtracking
 
-
 % Handle invalid move by human player.
-make_move2(human, P, S, B, B2) :-
+make_move2(human, P, B, B2) :-
     nl, nl,
     write('Invalid move. Please select a valid, empty column.'),
-    make_move2(human, P, S, B, B2).          % Retry until the human makes a valid move.
-
+    make_move2(human, P, B, B2).          % Retry until the human makes a valid move.
 
 % Computer player makes a move using minimax algorithm.
 make_move2(computer, P, B, B2) :-
@@ -252,8 +238,10 @@ moves(B, L) :-
     \+ win(B, x),                         % If either player has already won, there are no valid moves.
     \+ win(B, o),
     blank_mark(E),
-    findall(N, rectangle(B,N,E), L), 
-    L \= [].
+    findall(N, rectangle(B,N,E), L),      % Find all empty squares in the top row of each column.
+    L \= [].                              % Ensure the list of moves is not empty.
+
+
 %.......................................
 % rectangle
 %.......................................
@@ -310,8 +298,7 @@ game_over2(P, B) :-
 % game is over if there are no blank squares left
 game_over2(P, B) :-
     moves(B, L),
-    L == [],
-    write('No more moves left.'), nl.
+    L == [].
 
 %.......................................
 % minimax
@@ -438,57 +425,64 @@ output_column_numbers :-
     write(' 1 2 3 4 5 6 7'), nl.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%     GUI INTERFACE
+%%% GUI
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-menu_window(W) :-
-    new(W, dialog('Connect4IF')),
-    send(W, append, new(button('Start', message(@prolog, run_game, W)))),
-    send(W, append, new(button('Quit', message(W, destroy)))),
-    send(W, position, point(200, 100)),
+create_menu_window :-
+    new(W, dialog('Connect4IF')), 
+    send(W, size, size(550, 150)),
+    
+    add_colored_circles(W, 50),
+
+    send(W, background, colour(black)),  
+
+    send(W, append, new(Titre, text('Connect4IF'))),
+    send(Titre, font, font(helvetica, bold, 26)), 
+    send(Titre, colour, colour(white)),  
+    
+    send(W, append, new(Button1, button('Start', message(@prolog, start_game, W)))),
+    send(W, append, new(Button4, button('Quit', message(W, destroy)))),
+
+    % Ouvrir la fenêtre
     send(W, open).
 
-run_game(W) :-
+start_game(W) :-
     send(W, destroy),
     run.
 
-n_players_window(W) :-
-    new(W, dialog('Connect4IF')),
-    send(W, append, new(button('0', message(@prolog, set_num_players, 0, W)))),
-    send(W, append, new(button('1', message(@prolog, set_num_players, 1, W)))),
-    send(W, append, new(button('2', message(@prolog, set_num_players, 2, W)))),
-    send(W, position, point(200, 100)),
-    send(W, open).
+% Ajouter des cercles alternant entre rouge et bleu
+add_colored_circles(W, N) :-
+    add_colored_circles(W, N, 0).
 
-set_num_players(N, W) :-
-    set_players(N),
-    send(W, destroy).
+add_colored_circles(_, 0, _) :- !.  % Arrêter quand N atteint 0
+add_colored_circles(W, N, Counter) :-
+    RandomX is random(550),  % Générer une position X aléatoire
+    RandomY is random(150),  % Générer une position Y aléatoire
+    send(W, display, new(Circle, circle(10))),  % Créer un cercle de rayon 10
+    
+    % Alterner les couleurs entre rouge et bleu
+    (   0 is Counter mod 2
+    ->  send(Circle, fill_pattern, colour(red))  % Rouge pour les cercles pairs
+    ;   send(Circle, fill_pattern, colour(blue))  % Bleu pour les cercles impairs
+    ),
+    
+    send(Circle, move, point(RandomX, RandomY)),  % Déplacer à la position aléatoire
+    NewCounter is Counter + 1,
+    NewN is N - 1,
+    add_colored_circles(W, NewN, NewCounter).  % Rappel pour ajouter le prochain cercle
 
-choose_mark_window(W) :-
-    new(W, dialog('Connect4IF')),
-    send(W, append, new(button('X', message(@prolog, set_mark, x, W)))),
-    send(W, append, new(button('O', message(@prolog, set_mark, o, W)))),
-    send(W, position, point(200, 100)),
-    send(W, open).
 
-set_mark(M, W) :-
-    human_playing(M),
-    send(W, destroy),
-    play(1).
-
-board_window(W, P, B) :-
-    new(W, dialog('Connect4IF')),
-    write('\n--Player '), write(P), write(' turn.'), nl,
-    send(W, size, size(370, 380)),
-    send(W, position, point(200, 100)),
+% Crée une fenêtre pour afficher le plateau
+create_board_window(W, B) :-
+    new(W, picture('Connect4IF')),
+    send(W, size, size(355, 305)),
     send(W, open),
     send(W, background, colour(black)),
-    draw_board(W, P, B, 6, 7).
+    draw_board(W, B, 6, 7).
 
 % Dessine le plateau sur la fenêtre
-draw_board(W, P, B, Rows, Cols) :-
-    draw_cells(W, B, Rows, Cols, Rows, 1),
-    draw_buttons(W, P, B, Cols).
+draw_board(W, B, Rows, Cols) :-
+    draw_cells(W, B, Rows, Cols, Rows, 1).
 
 % Parcourt les cellules pour les dessiner
 draw_cells(_, _, 0, _, _, _) :- !.
@@ -523,28 +517,11 @@ draw_cell(W, M, X, Y) :-
         send(W, display, Box, point(X, Y))
     ).
 
-% Dessine les boutons pour chaque colonne, sous le plateau
-draw_buttons(W, P, B, Cols) :-
-    ButtonY is 50 * 6 + 15, % Position sous les cellules
-    draw_buttons(W, P, B, 1, Cols, ButtonY).
+update_board(W, B) :-
+    send(W, clear),
+    draw_board(W, B, 6, 7),
+    send(W, expose).
 
-draw_buttons(_, P, B, Col, TotalCols, _) :-
-    Col > TotalCols, !.
-draw_buttons(W, P, B, Col, TotalCols, ButtonY) :-
-    X is (Col - 1) * 50 + 15,
-    new(Button, button(Col, message(@prolog, play_move, W, P, Col))),
-    send(Button, colour, colour(white)),
-    send(W, display, Button, point(X, ButtonY)),
-    NextCol is Col + 1,
-    draw_buttons(W, P, B, NextCol, TotalCols, ButtonY).
-
-play_move(W, P, Col) :-
-    board(B),
-    not(game_over(P, B)), !,
-    make_move(P, B, Col), !,
-    send(W, destroy), !,
-    next_player(P, P2), !,
-    play(P2), !.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% UTILS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -562,4 +539,4 @@ random_int_1n(N, V) :-
 %%%     MAIN
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-:- menu_window(W).
+:- create_menu_window.
