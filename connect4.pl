@@ -214,7 +214,7 @@ make_move2(computer, P, B, B2) :-
     nl, nl,
     write('Computer is thinking about its next move...'),
     player_mark(P, M),
-    random_int_1n(7, S), %version 1: l'odinateur joue au hasard
+    random_ia(B,S),    %version 1: l'odinateur joue au hasard
     % minimax(0, B, M, S, U),
     move(B, S, M, B2),
     nl, nl,
@@ -291,6 +291,21 @@ game_over2(P, B) :-
     moves(B, L),
     L == [].
 
+
+%.......................................
+% IA random
+%.......................................
+% The randomIA algorithm plays.
+random_ia(B, S):-
+    random_int_1n(7,S),                   % Read the square index from the player.
+    moves(B, AvailableMoves),             % Get the list of available moves.
+    member(S, AvailableMoves).           % Check if the selected square is valid.
+
+% Handle invalid move by computer.
+random_ia(B, S):-
+    nl, nl,
+    write('Invalid random number. New try.'),
+    random_ia(B, S).         % Retry until the coputer makes a valid move.
 %.......................................
 % minimax
 %.......................................
