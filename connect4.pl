@@ -146,27 +146,27 @@ set_players(0) :-
     write('2: Weighted-grid AI\n'),
     write('3: Offensive AI\n'),
     write('4: Defensive AI\n'),
-    read(AI),
+    read(AI1),
     write('What AI do you want for the second AI ? (1, 2, 3, 4)\n'),
     write('1: Random AI\n'),
     write('2: Weighted-grid AI\n'),
     write('3: Offensive AI\n'),
     write('4: Defensive AI\n'),
     read(AI2),
-    asserta( player(1, computer, AI) ),
+    asserta( player(1, computer, AI1) ),
     asserta( player(2, computer, AI2) ), !.
 
 set_players(1) :-
     nl,
-    write('Is human playing x or o (x moves first)? '),
+    write('Is human playing x or o (x moves first)? \n'),
     read(M),
-    write('What AI do you want to play against? (1, 2, 3, 4)'),
-    write('1: Random AI'),
-    write('2: Weighted-grid AI'),
-    write('3: Offensive AI'),
-    write('4: Defensive AI'),
+    write('What AI do you want to play against? (1, 2, 3, 4)\n'),
+    write('1: Random AI\n'),
+    write('2: Weighted-grid AI\n'),
+    write('3: Offensive AI\n'),
+    write('4: Defensive AI\n'),
     read(AI),
-    human_playing(M, AI), !.
+    human_playing(M, AI),!.
 
 set_players(2) :- 
     asserta( player(1, human, 0) ),
@@ -199,6 +199,7 @@ human_playing(_) :-
 % main function
 
 play(P) :-
+write('rzfegh'),
     board(B), !,
     output_board(B), !,
     not(game_over(P, B)), !,
@@ -246,25 +247,26 @@ make_move2(human, P, B, B2) :-
 % Computer player makes a move using minimax algorithm.
 make_move2(computer, P, B, B2) :-
     nl, nl,
+    write('Computer is thinking about its next move...'),
     player_mark(P, M),
-    player(P,computer,IA),
+    player(P,Z,IA),
+    % write(IA),
     jeu_IA(IA, B, M, S, U),
+
+    minimax(0, B, M, S, U), %version 3 ou 4: l'ordinateur joue avec minimax
+
     move(B, S, M, B2),
     nl, nl,
     write('Computer places '), write(M),
     write(' in column '), write(S), write('.').
 
 jeu_IA(1, B, M, S, U):-
-    write('Computer is thinking about its next move...'),
     random_ia(B,S).    %version 1: l'odinateur joue au hasard
 
 jeu_IA(2, B, M, S, U):-
-    write('Computer is thinking about its next move...'),
-
     computer_best_score_move(B,S).
 
 jeu_IA(_, B, M, S, U):-
-    write('Computer is thinking about its next move...'),
     minimax(0, B, M, S, U). %version 3 ou 4: l'ordinateur joue avec minimax
 
 
@@ -382,7 +384,7 @@ game_over2(P, B) :-
 % game is over if there are no blank squares left
 game_over2(P, B) :-
     moves(B, L),
-    write(L),nl,
+    % write(L),nl,
     L == [].
 
 
