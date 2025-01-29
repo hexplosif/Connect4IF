@@ -99,7 +99,7 @@ hello :-
 
 initialize :-
     blank_mark(E),
-    asserta( Board (
+    asserta( board(
     [   [E,E,E,E,E,E],
         [E,E,E,E,E,E],
         [E,E,E,E,E,E],
@@ -109,7 +109,7 @@ initialize :-
         [E,E,E,E,E,E]]) )  %%% create a blank board
     .
 
-goodbye :-
+Tgoodbye :-
     board(B),
     nl,
     nl,
