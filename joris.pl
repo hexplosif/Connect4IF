@@ -54,6 +54,40 @@ vertical_evaluation(Board, Comb, U, NewU) :-
     true
     .
 
+diagonal_evaluation(Board, Comb, U, NewU) :- 
+    diagonals(Board, Diags),
+    findall(_, (member(Diag, Diags), append([_, Comb, _], Diag)), Matches),
+    length(Matches, Count),
+    NewU is U + Count,
+    true
+    .
+
+% Récupération des diagonales d'une grille
+diagonals(Board, Diags) :-
+    findall(Diag, diagonal(Board, Diag), Diags).
+
+diagonal(Board, Diag) :-
+    length(Board, N),
+    between(0, N, K),
+    findall(Elem, (
+        between(0, N, I),
+        J is I + K,
+        nth0(I, Board, Row),
+        nth0(J, Row, Elem)
+    ), Diag),
+    Diag \= [].
+
+diagonal(Board, Diag) :-
+    length(Board, N),
+    between(0, N, K),
+    findall(Elem, (
+        between(0, N, I),
+        J is I - K,
+        nth0(I, Board, Row),
+        nth0(J, Row, Elem)
+    ), Diag),
+    Diag \= [].
+
 %.......................................
 % evaluation
 %.......................................
@@ -65,14 +99,16 @@ combinationX([ ['x','x','x'],
 combinationO([ ['o','o','o'], 
                 ['o','o'] ]).
 
-evaluate([],U).
+evaluate([], B).
 
-evaluate([H|T],U) :-
-    board(B),
-    U1 = U,
+evaluate([H|T],B) :-
+    valeurU(U1),
     horizontal_evaluation(B,H,U1,NewU1),
-    evaluate(T,NewU1),
-    U = NewU1
+    vertical_evaluation(B,H,NewU1,NewU2),
+    diagonal_evaluation(B,H,NewU2,NewU3),
+    retract(valeurU(_)),
+    asserta(valeurU(NewU3)),
+    evaluate(T, B)
     .
 
 %.......................................
@@ -81,6 +117,7 @@ evaluate([H|T],U) :-
 % determines the value of a given board position
 %
 
+/*
 utility(B,U,M) :-
     win(B,'x'),
     U = 1000000, 
@@ -92,20 +129,25 @@ utility(B,U,M) :-
     U = (-1000000), 
     !
     .
+*/
 
 utility(B,U,'x') :-
+    asserta(valeurU(0)),
+    retract(valeurU(_)),
+    asserta(valeurU(0)),
     combinationX(C),
-    U1 = 0,
-    evaluate(C,U1),
-    U = U1,
-    .
+    evaluate(C,B),
+    valeurU(U1),
+    U = U1.
 
 utility(B,U,'o') :-
+    asserta(valeurU(0)),
+    retract(valeurU(_)),
+    asserta(valeurU(0)),
     combinationO(C),
-    U1 = 0,
-    evaluate(C,U1),
-    U = -U1,
-    .
+    evaluate(C,B),
+    valeurU(U1),
+    U = -U1.
 
 %.......................................
 % minimax
@@ -258,3 +300,26 @@ better2(D,R,M,S1,U1,S2,U2,  S,U) :-
     !
     .
 
+
+test_evaluate :-
+    B = [['o', 'o', 'e', 'e', 'e', 'e'],
+         ['e', 'e', 'e', 'e', 'e', 'e'],
+         ['o', 'e', 'e', 'e', 'e', 'e'],
+         ['x', 'o', 'e', 'e', 'e', 'e'],
+         ['x', 'x', 'e', 'e', 'e', 'e'],
+         ['e', 'e', 'e', 'e', 'e', 'e'],
+         ['x', 'x', 'e', 'e', 'e', 'e']],
+    utility(B,U,'x'),
+    write('Utility pour joueur X: '), write(U), nl,
+
+    B2 = [['o', 'e', 'e', 'e', 'e', 'e'],
+          ['x', 'o', 'e', 'e', 'e', 'e'],
+          ['e', 'e', 'e', 'e', 'e', 'e'],
+          ['e', 'e', 'e', 'e', 'e', 'e'],
+          ['e', 'e', 'e', 'e', 'e', 'e'],
+          ['e', 'e', 'e', 'e', 'e', 'e'],
+          ['x', 'e', 'e', 'e', 'e', 'e']],
+    utility(B2,U2,'o'),
+    write('Utility pour joueur O: '), write(U2), nl.
+
+:- test_evaluate.
