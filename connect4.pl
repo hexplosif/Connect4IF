@@ -383,10 +383,6 @@ game_over2(P, B) :-
 % game is over if there are no blank squares left
 game_over2(P, B) :-
     moves(B, L),
-<<<<<<< HEAD
-=======
-    % write(L),nl,
->>>>>>> fc88f9795c5afb97075a542ea1bf4999ac8a84d2
     L == [].
 
 
@@ -541,10 +537,6 @@ defensive_horizontal_evaluation(Board, Opponent, U, NewU) :-
         member(Row, Board),
         append([_, Comb, _], Row), 
         combinationDanger(Comb, Opponent)
-<<<<<<< HEAD
-        % write(Comb), nl
-=======
->>>>>>> fc88f9795c5afb97075a542ea1bf4999ac8a84d2
     ), Matches),
     length(Matches, Count),
     NewU is U + Count * 10.
@@ -561,10 +553,6 @@ defensive_diagonal_evaluation(Board, Opponent, U, NewU) :-
         member(Diag, Diags),
         append([_, Comb, _], Diag), 
         combinationDanger(Comb, Opponent)
-<<<<<<< HEAD
-        % write(Comb), nl
-=======
->>>>>>> fc88f9795c5afb97075a542ea1bf4999ac8a84d2
     ), Matches),
     length(Matches, Count),
     NewU is U - Count * 10.
@@ -900,7 +888,6 @@ maximumListe([T|Q],X):-maximumListe(Q,M), (M<T -> X=T ; X=M). %X est assigné au
 
 
 
-<<<<<<< HEAD
 % Run multiple games between two Random AIs and track results
 run_simulation(N, XWins, OWins, Draws) :-
     run_games(N, 0, 0, 0, XWins, OWins, Draws).
@@ -946,7 +933,3 @@ play_clean(P) :-
 simulate(N) :-
     nl, nl,
     run_simulation(N, XWins, OWins, Draws).
-=======
-
-:- run. % Start the game.
->>>>>>> fc88f9795c5afb97075a542ea1bf4999ac8a84d2
