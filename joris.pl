@@ -46,7 +46,7 @@ extract_column([[H | T] | Rows], [H | Column], [T | RestRows]) :-
 
 horizontal_analysis(Board, M, Comb) :- 
     member(Row, Board),
-    member(Comb, Row).
+    append([_, SUB, _], LIST).
 
 vertical_analysis(Board, M, NbCons) :- 
     transpose(Board, TBoard),
@@ -60,13 +60,14 @@ vertical_analysis(Board, M, NbCons) :-
 %.......................................
 % determines the value of a given board position
 %
-combination = [ [M1,M1,M1], 
+combination = [ [A,M1,M1], 
                 [M1,M1] ]
 
 score = [ 0.5, 0.5 ]
 
 evaluate(B,U) :-
-    
+    change_mark('x'),
+
     .
 
 %.......................................
