@@ -141,33 +141,51 @@ read_players :-
     set_players(N).
 
 set_players(0) :- 
-    asserta( player(1, computer) ),
-    asserta( player(2, computer) ), !.
+    write('What IA do you want for the first AI ? (1, 2, 3, 4)'),
+    write('1: Random IA'),
+    write('2: Weighted-grid IA'),
+    write('2: Offensive IA'),
+    write('3: Defensive IA'),
+    read(IA),
+    write('What IA do you want for the second AI ? (1, 2, 3, 4)'),
+    write('1: Random IA'),
+    write('2: Weighted-grid IA'),
+    write('2: Offensive IA'),
+    write('3: Defensive IA'),
+    read(IA2),
+    asserta( player(1, computer, IA) ),
+    asserta( player(2, computer, IA2) ), !.
 
 set_players(1) :-
     nl,
     write('Is human playing x or o (x moves first)? '),
     read(M),
-    human_playing(M), !.
+    write('What IA do you want to play against? (1, 2, 3, 4)'),
+    write('1: Random IA'),
+    write('2: Weighted-grid IA'),
+    write('2: Offensive IA'),
+    write('3: Defensive IA'),
+    read(IA),
+    human_playing(M, IA), !.
 
 set_players(2) :- 
-    asserta( player(1, human) ),
-    asserta( player(2, human) ), !.
+    asserta( player(1, human, 0) ),
+    asserta( player(2, human, 0) ), !.
 
 set_players(_) :-
     nl,
     write('Please enter 0, 1, or 2.'),
     read_players.
 
-human_playing(M) :- 
+human_playing(M, IA) :- 
     (M == 'x'),
-    asserta( player(1, human) ),
-    asserta( player(2, computer) ), !.
+    asserta( player(1, human, 0) ),
+    asserta( player(2, computer, IA) ), !.
 
 human_playing(M) :- 
     (M == 'o'),
-    asserta( player(1, computer) ),
-    asserta( player(2, human) ), !.
+    asserta( player(1, computer, IA) ),
+    asserta( player(2, human, 0) ), !.
 
 human_playing(_) :-
     nl,
