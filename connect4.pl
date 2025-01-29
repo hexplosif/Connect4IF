@@ -883,3 +883,48 @@ random_int_1n(N, V) :-
 
 maximumListe([X],X). %vrai si X est le seul element de la liste
 maximumListe([T|Q],X):-maximumListe(Q,M), (M<T -> X=T ; X=M). %X est assigné au plus grand des deux (à chaque fois)
+
+
+
+% Run multiple games between two Random AIs and track results
+run_simulation(N, XWins, OWins, Draws) :-
+    run_games(N, 0, 0, 0, XWins, OWins, Draws).
+
+% Base case: No more games to play, return results
+run_games(0, X, O, D, X, O, D) :- !,
+    write('DONE'), nl,
+    format("Simulation complete. Results:\nPlayer X Wins: ~d\nPlayer O Wins: ~d\nDraws: ~d\n", [X, O, D]).
+
+% Play a game, update results, and recurse
+run_games(N, X, O, D, XFinal, OFinal, DFinal) :-
+    initialize,                     % Reset board for a new game
+    asserta(player(1, computer, 3)), % Assign Random AI to Player 1
+    asserta(player(2, computer, 3)), % Assign Random AI to Player 2
+    nl, write('play start'),
+    play(1),                         % Start game with Player 1
+    % board(B),                        % Get final board state
+    % nl, nl,
+    % write('Game over: '),
+    % output_winner(B),
+    % (   win(B, 'x') -> X1 is X + 1, O1 is O, D1 is D  % Player X wins
+    % ;   win(B, 'o') -> X1 is X, O1 is O + 1, D1 is D  % Player O wins
+    % ;   X1 is X, O1 is O, D1 is D + 1                % Draw
+    % ),
+    retractall(board(_)),
+    retractall(player(_, _, _)),
+    N1 is N - 1,
+    run_games(N1, X1, O1, D1, XFinal, OFinal, DFinal).
+
+
+play_clean(P) :-
+    board(B), !,
+    not(game_over(P, B)), !,
+    make_move(P, B), !,
+    next_player(P, P2), !,
+    play(P2), !
+    .
+
+% Entry point to start simulation with N games
+simulate(N) :-
+    nl, nl,
+    run_simulation(N, XWins, OWins, Draws).
