@@ -70,7 +70,15 @@ blank_mark('e').        %%% the mark used in an empty square
 maximizing('x').        %%% the player playing x is always trying to maximize the utility of the board position
 minimizing('o').        %%% the player playing o is always trying to minimize the utility of the board position
 
-
+score_board([
+    [3, 4, 5, 5, 4, 3],
+    [4, 6, 8, 8, 6, 4],
+    [5, 8, 10, 10, 8, 5],
+    [7, 10, 13, 13, 10, 7],
+    [5, 8, 10, 10, 6, 4],
+    [4, 6, 8, 8, 6, 4],
+    [3, 4, 5, 5, 4, 3]
+]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%     MAIN PROGRAM
@@ -117,7 +125,7 @@ goodbye :-
     write('Game over: '),
     output_winner(B),
     retract(board(_)),
-    retract(player(_,_)),
+    retract(player(_,_,_)),
     read_play_again(V), !,
     (V == 'y'), !,
     run.
@@ -141,33 +149,52 @@ read_players :-
     set_players(N).
 
 set_players(0) :- 
-    asserta( player(1, computer) ),
-    asserta( player(2, computer) ), !.
+    write('What AI do you want for the first AI ? (1, 2, 3, 4)\n'),
+    write('1: Random AI\n'),
+    write('2: Weighted-grid AI\n'),
+    write('3: Offensive AI\n'),
+    write('4: Defensive AI\n'),
+    read(AI1),
+    write('What AI do you want for the second AI ? (1, 2, 3, 4)\n'),
+    write('1: Random AI\n'),
+    write('2: Weighted-grid AI\n'),
+    write('3: Offensive AI\n'),
+    write('4: Defensive AI\n'),
+    read(AI2),
+    asserta( player(1, computer, AI1) ),
+    asserta( player(2, computer, AI2) ), !.
 
 set_players(1) :-
     nl,
-    write('Is human playing x or o (x moves first)? '),
+    write('Is human playing x or o (x moves first)? \n'),
     read(M),
-    human_playing(M), !.
+    write('What AI do you want to play against? (1, 2, 3, 4)\n'),
+    write('1: Random AI\n'),
+    write('2: Weighted-grid AI\n'),
+    write('3: Offensive AI\n'),
+    write('4: Defensive AI\n'),
+    read(AI),
+    write('AI: '), write(AI),
+    human_playing(M, AI), !.
 
 set_players(2) :- 
-    asserta( player(1, human) ),
-    asserta( player(2, human) ), !.
+    asserta( player(1, human, 0) ),
+    asserta( player(2, human, 0) ), !.
 
 set_players(_) :-
     nl,
     write('Please enter 0, 1, or 2.'),
     read_players.
 
-human_playing(M) :- 
+human_playing(M, AI) :- 
     (M == 'x'),
-    asserta( player(1, human) ),
-    asserta( player(2, computer) ), !.
+    asserta( player(1, human, 0) ),
+    asserta( player(2, computer, AI) ), !.
 
-human_playing(M) :- 
+human_playing(M, AI) :- 
     (M == 'o'),
-    asserta( player(1, computer) ),
-    asserta( player(2, human) ), !.
+    asserta( player(1, computer, AI) ),
+    asserta( player(2, human, 0) ), !.
 
 human_playing(_) :-
     nl,
@@ -196,8 +223,16 @@ play(P, W) :-
 % Requests the next move from human/computer, 
 % then applies that move to the given board.
 
+% Vérifie si une ligne ne contient pas 'e'
+row_full([]).
+row_full([H|T]) :- H \= 'e', row_full(T).
+
+% Vérifie si tout le plateau est rempli (aucune ligne ne contient 'e')
+board_full([]).
+board_full([Row|Rest]) :- row_full(Row), board_full(Rest).
+
 make_move(P, B) :-
-    player(P, Type),
+    player(P, Type, AI),
     make_move2(Type, P, B, B2),  % Delegate the move based on player type (human or computer).
     retract(board(_)),           % Update the current board.
     asserta(board(B2)).
@@ -223,12 +258,25 @@ make_move2(computer, P, B, B2) :-
     nl, nl,
     write('Computer is thinking about its next move...'),
     player_mark(P, M),
-    random_int_1n(7, S), %version 1: l'odinateur joue au hasard
-    % minimax(0, B, M, S, U),
+    player(P,Z,IA),
+    % write(IA),
+    jeu_IA(IA, B, M, S, U),
+    write('Computer places '), write(M),
     move(B, S, M, B2),
+    write(' in column '), write(S), write('.'),
     nl, nl,
     write('Computer places '), write(M),
-    write(' in square '), write(S), write('.').
+    write(' in column '), write(S), write('.').
+
+jeu_IA(1, B, M, S, U):-
+    random_ia(B,S).    %version 1: l'odinateur joue au hasard
+
+jeu_IA(2, B, M, S, U):-
+    computer_best_score_move(B,S).
+
+jeu_IA(_, B, M, S, U):-
+    minimax(0, B, M, S, U). %version 3 ou 4: l'ordinateur joue avec minimax
+
 
 %.......................................
 % moves
@@ -344,7 +392,242 @@ game_over2(P, B) :-
 % game is over if there are no blank squares left
 game_over2(P, B) :-
     moves(B, L),
+    % write(L),nl,
     L == [].
+
+
+%.......................................
+% AI random
+%.......................................
+% The randomIA algorithm plays.
+random_ia(B, S):-
+    random_int_1n(7,S),                   % Read the square index from the player.
+    moves(B, AvailableMoves),             % Get the list of available moves.
+    member(S, AvailableMoves),
+    !.           % Check if the selected square is valid.
+
+% Handle invalid move by computer.
+random_ia(B, S):-
+    nl, nl,
+    write('Invalid random number. New try.'),
+    random_ia(B, S).         % Retry until the coputer makes a valid move.
+
+%.......................................
+% AI 2
+% Computer plays best score
+% On donne des scores aux cases pour savoir si elles offrent une grande possibilité de coups gagnants
+% Peu efficace car très déterministe -> un peu mieux que l'aléatoire  '
+%.......................................
+% 
+computer_best_score_move(B,S):-
+    moves(B, AvailableMoves),             % Get the list of available moves.
+    get_list_scores(AvailableMoves, L),
+    maximumListe(L,Max), !,               % find the maximum score in the list 
+    nth1(Imax,L,Max), !,                  % find the index of the maximum score in the list
+    nth1(Imax,AvailableMoves,S)           % find the best move
+.
+
+get_list_scores([],[]).
+get_list_scores([Available_T|Available_Q], [Score|L]):-
+    get_list_scores(Available_Q, L),
+    calculer_score_location(Available_T, Score)     % Pour chaque elemennt de AvailableMoves on renvoie le score associé à l'emplacement et on le stocke dans la liste L  '
+    .
+
+calculer_score_location(Available_T, Score):-
+    score_board(SB),
+    board(B),
+    nth1(Available_T, B, ColB),             % Get the column number Available_T of the board
+    nth1(Available_T, SB, ColSB),           % Get the column number Available_T of the score_board
+    nth1(I,ColB,e), !,                      % Get the first empty mark of the column ColB of the mark
+    nth1(I,ColSB,Score)                     % Get the score of the empty mark found above
+    .
+
+
+
+%.......................................
+% evaluation with two combination
+%.......................................
+% tools necessary to determine the evaluation of a given board position
+%
+horizontal_evaluation(Board, Comb, U, NewU) :- 
+    findall(_, (member(Row, Board), append([_, Comb, _], Row)), Matches),
+    length(Matches, Count),
+    NewU is U + Count
+    .
+
+vertical_evaluation(Board, Comb, U, NewU) :- 
+    transpose(Board, TBoard),
+    findall(_, (member(Row, TBoard), append([_, Comb, _], Row)), Matches),
+    length(Matches, Count),
+    NewU is U + Count
+    .
+
+diagonal_evaluation(Board, Comb, U, NewU) :- 
+    diagonals(Board, Diags),
+    findall(_, (member(Diag, Diags), append([_, Comb, _], Diag)), Matches),
+    length(Matches, Count),
+    NewU is U + Count
+    .
+
+% Récupération des diagonales d'une grille
+diagonals(Board, Diags) :-
+    findall(Diag, diagonal(Board, Diag), Diags).
+
+diagonal(Board, Diag) :-
+    length(Board, N),
+    between(0, N, K),
+    findall(Elem, (
+        between(0, N, I),
+        J is I + K,
+        nth0(I, Board, Row),
+        nth0(J, Row, Elem)
+    ), Diag),
+    Diag \= [].
+
+diagonal(Board, Diag) :-
+    length(Board, N),
+    between(0, N, K),
+    findall(Elem, (
+        between(0, N, I),
+        J is I - K,
+        nth0(I, Board, Row),
+        nth0(J, Row, Elem)
+    ), Diag),
+    Diag \= [].
+
+% .......................................
+% evaluation compter les doubles et triples
+% .......................................
+% determines the value of a given board position
+%
+combinationX([ ['x','x','x'], 
+                ['x','x'] ]).
+
+combinationO([ ['o','o','o'], 
+                ['o','o'] ]).
+
+evaluate([],B).
+
+evaluate([H|T],B) :-
+    % write('debut evaluation'),
+    valeurU(U1),
+    horizontal_evaluation(B,H,U1,NewU1),
+    vertical_evaluation(B,H,NewU1,NewU2),
+    diagonal_evaluation(B,H,NewU1,NewU3),
+    retract(valeurU(_)),
+    asserta(valeurU(NewU3)),
+    evaluate(T,B)
+    .
+
+%.......................................
+% defensive_evaluation
+%.......................................
+
+
+% Évalue un plateau en se basant sur une approche défensive.
+% Valorise les positions qui bloquent les opportunités de l'adversaire.
+
+% Détecte une combinaison dangereuse pour l'adversaire
+
+combinationDanger(['e', 'e', M, M], M).
+combinationDanger([M, M, 'e', 'e'], M).
+combinationDanger(['e', M, M, 'e'], M).
+combinationDanger([ M, 'e', M, 'e'], M).
+combinationDanger(['e', M, 'e', M], M).
+combinationDanger([M, 'e', 'e', M], M).
+
+combinationDanger([M, M, M, 'e'], M).
+combinationDanger(['e', M, M, M], M).
+combinationDanger([M, 'e', M, M], M).
+combinationDanger([M, M, 'e', M], M).
+
+% Évaluation horizontale défensive
+defensive_horizontal_evaluation(Board, Opponent, U, NewU) :-
+    findall(_, (
+        member(Row, Board),
+        append([_, Comb, _], Row), 
+        combinationDanger(Comb, Opponent)
+    ), Matches),
+    length(Matches, Count),
+    NewU is U + Count * 10.
+
+% Évaluation verticale défensive
+defensive_vertical_evaluation(Board, Opponent, U, NewU) :-
+    transpose(Board, TBoard),
+    defensive_horizontal_evaluation(TBoard, Opponent, U, NewU).
+
+% Évaluation diagonale défensive
+defensive_diagonal_evaluation(Board, Opponent, U, NewU) :-
+    findall(_, (
+        diagonals(Board, Diags),
+        member(Diag, Diags),
+        append([_, Comb, _], Diag), 
+        combinationDanger(Comb, Opponent)
+    ), Matches),
+    length(Matches, Count),
+    NewU is U + Count * 10.
+
+% Évaluation globale défensive
+defensive_evaluation(Board, U, M) :-
+    inverse_mark(M, Opponent),
+    U2 = 0,
+    defensive_horizontal_evaluation(Board, Opponent, U2, NewU1),
+    defensive_vertical_evaluation(Board, Opponent, NewU1, NewU),
+    defensive_diagonal_evaluation(Board, Opponent, NewU, U).
+
+%.......................................
+% utility
+%.......................................
+% determines the value of a given board position
+%
+
+utility(B,U,M,AI) :-
+    win(B,'x'),
+    U = 1000000, 
+    !
+    .
+
+utility(B,U,M,AI) :-
+    win(B,'o'),
+    U = (-1000000), 
+    !
+    .
+
+utility(B,U,M,AI) :-
+    board_full(B),
+    U = 0, 
+    !
+    .
+
+utility(B,U,'x',3) :-
+    asserta(valeurU(0)),
+    % write('utility 1'),nl,
+    retract(valeurU(_)),
+    asserta(valeurU(0)),
+    combinationX(C),
+    evaluate(C,B),
+    valeurU(U1),
+    U = U1,
+    !
+    .
+
+utility(B,U,'o',3) :-
+    asserta(valeurU(0)),
+    % write('utility 2 first'),nl,
+    retract(valeurU(_)),
+    % write('utility 2'),nl,
+    asserta(valeurU(0)),
+    % write('utility 2'),nl,
+    combinationO(C),
+    % write(C),
+    evaluate(C,B),
+    valeurU(U1),
+    U = -U1,
+    !
+    .
+
+utility(B, U, M, 4) :-
+    defensive_evaluation(B, U, M).
 
 %.......................................
 % minimax
@@ -364,6 +647,7 @@ minimax(D,[ [E,E,E,E,E,E],
     S = 4, !.
 
 minimax(D,B,M,S,U) :-
+    % write('minimax 2'),nl,
     D2 is D + 1,
     moves(B,L), !,          %%% get the list of available moves
     best(D2,B,M,L,S,U), !.  %%% recursively determine the best available move
@@ -371,7 +655,127 @@ minimax(D,B,M,S,U) :-
 % if there are no more available moves, 
 % then the minimax value is the utility of the given board position
 minimax(D,B,M,S,U) :-
-    utility(B,U).
+    player(A, computer, AI),
+    utility(B,U,M,AI).
+
+%.......................................
+% best
+%.......................................
+% determines the best move in a given list of moves by recursively calling minimax
+%
+
+% if max depth is reached
+% if there is only one move left in the list...
+
+best(4,B,M,[S1],S,U) :-
+    % write('best 1'),nl,
+    move(B,S1,M,B2),        %%% apply that move to the board,
+    inverse_mark(M,M2), 
+    !,  
+    player(A, computer, AI),
+    utility(B2,U,M2,AI),  %%% then search for the utility value of that move.
+    S = S1, !,
+    % output_value(D,S,U),
+    !
+    .
+
+% if there is more than one move in the list...
+
+best(4,B,M,[S1|T],S,U) :-
+    % write('best 2'),nl,
+    move(B,S1,M,B2),             %%% apply the first move (in the list) to the board,
+    inverse_mark(M,M2), 
+    !,
+    player(A, computer, AI),
+    utility(B2,U1,M2,AI),      %%% recursively search for the utility value of that move,
+    best(4,B,M,T,S2,U2),         %%% determine the best move of the remaining moves,
+    % output_value(D,S1,U1),      
+    better(D,M,S1,U1,S2,U2,S,U)  %%% and choose the better of the two moves (based on their respective utility values)
+    .
+
+
+% if there is only one move left in the list...
+
+best(D,B,M,[S1],S,U) :-
+    % write('best 3'),nl,
+    move(B,S1,M,B2),        %%% apply that move to the board,
+    inverse_mark(M,M2), 
+    !,  
+    minimax(D,B2,M2,_S,U),  %%% then recursively search for the utility value of that move.
+    S = S1, !,
+    % output_value(D,S,U),
+    !
+    .
+
+% if there is more than one move in the list...
+
+best(D,B,M,[S1|T],S,U) :-
+    % write('best 4'),nl,
+    move(B,S1,M,B2),             %%% apply the first move (in the list) to the board,
+    % write(B),nl,nl,
+    inverse_mark(M,M2),
+    !,
+    minimax(D,B2,M2,_S,U1),      %%% recursively search for the utility value of that move,
+    best(D,B,M,T,S2,U2),         %%% determine the best move of the remaining moves,
+    % output_value(D,S1,U1),     
+    better(D,M,S1,U1,S2,U2,S,U)  %%% and choose the better of the two moves (based on their respective utility values)
+    .
+
+%.......................................
+% better
+%.......................................
+% returns the better of two moves based on their respective utility values.
+%
+% if both moves have the same utility value, then one is chosen at random.
+
+better(D,M,S1,U1,S2,U2,     S,U) :-
+    maximizing(M),                     %%% if the player is maximizing
+    U1 > U2,                           %%% then greater is better.
+    S = S1,
+    U = U1,
+    !
+    .
+
+better(D,M,S1,U1,S2,U2,     S,U) :-
+    minimizing(M),                     %%% if the player is minimizing,
+    U1 < U2,                           %%% then lesser is better.
+    S = S1,
+    U = U1, 
+    !
+    .
+
+better(D,M,S1,U1,S2,U2,     S,U) :-
+    U1 == U2,                          %%% if moves have equal utility,
+    random_int_1n(10,R),               %%% then pick one of them at random
+    better2(D,R,M,S1,U1,S2,U2,S,U),    
+    !
+    .
+
+better(D,M,S1,U1,S2,U2,     S,U) :-        %%% otherwise, second move is better
+    S = S2,
+    U = U2,
+    !
+    .
+
+
+%.......................................
+% better2
+%.......................................
+% randomly selects two squares of the same utility value given a single probability
+%
+
+better2(D,R,M,S1,U1,S2,U2,  S,U) :-
+    R < 6,
+    S = S1,
+    U = U1, 
+    !
+    .
+
+better2(D,R,M,S1,U1,S2,U2,  S,U) :-
+    S = S2,
+    U = U2,
+    !
+    .
 
 %.......................................
 % move
@@ -402,12 +806,12 @@ replace_column([H|T], N, NewCol, [H|NewT]) :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 output_players :- 
-    nl,
-    player(1, V1),
-    write('Player 1 is '), write(V1),  %%% either human or computer
-    nl,
-    player(2, V2),
-    write('Player 2 is '), write(V2), !.  %%% either human or computer
+    write('Player 1: '),
+    player(1, Type1, AI1),
+    write(Type1), write(' '), write(AI1), nl,
+    write('Player 2: '),
+    player(2, Type2, AI2),
+    write(Type2), write(' '), write(AI2), nl.
 
 output_winner(B) :-
     win(B,x),
@@ -469,6 +873,7 @@ output_square(E) :-
 output_column_numbers :-
     write('---------------'), nl,
     write(' 1 2 3 4 5 6 7'), nl.
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% GUI
@@ -568,6 +973,7 @@ update_board(W, B) :-
     draw_board(W, B, 6, 7),
     send(W, expose).
 
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% UTILS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -580,6 +986,17 @@ update_board(W, B) :-
 % eg : random_int_1n(7,R).
 random_int_1n(N, V) :-
     V is random(N) + 1, !.
+
+
+%.......................................
+% find the maximum value in a list
+%.......................................
+
+maximumListe([X],X). %vrai si X est le seul element de la liste
+maximumListe([T|Q],X):-maximumListe(Q,M), (M<T -> X=T ; X=M). %X est assigné au plus grand des deux (à chaque fois)
+
+
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%     MAIN
