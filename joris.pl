@@ -23,16 +23,11 @@ moves(B,L) :-
     .
 
 %.......................................
-% isconsecutive
+% horizontal and vertical evaluation
 %.......................................
 % tools necessary to determine the evaluation of a given board position
 %
 
-isconsecutive(List, Player, Length) :-
-    length(SubList, Length),
-    append(_, SubListRest, List),
-    append(SubList, _, SubListRest),
-    maplist(=(Player), SubList).
 
 transpose([], []).
 transpose([[] | _], []).
@@ -44,30 +39,40 @@ extract_column([], [], []).
 extract_column([[H | T] | Rows], [H | Column], [T | RestRows]) :-
     extract_column(Rows, Column, RestRows).
 
-horizontal_analysis(Board, M, Comb) :- 
-    member(Row, Board),
-    append([_, SUB, _], LIST).
+horizontal_evaluation(Board, Comb, U, NewU) :- 
+    findall(_, (member(Row, Board), append([_, Comb, _], Row)), Matches),
+    length(Matches, Count),
+    NewU is U + Count,
+    true
+    .
 
-vertical_analysis(Board, M, NbCons) :- 
+vertical_evaluation(Board, Comb, U, NewU) :- 
     transpose(Board, TBoard),
-    member(Row, TBoard),
-    isconsecutive(Row, M, NbCons).
-
-% append([_, SUB, _], LIST).
+    findall(_, (member(Row, TBoard), append([_, Comb, _], Row)), Matches),
+    length(Matches, Count),
+    NewU is U + Count,
+    true
+    .
 
 %.......................................
 % evaluation
 %.......................................
 % determines the value of a given board position
 %
-combination = [ [A,M1,M1], 
-                [M1,M1] ]
+combinationX([ ['x','x','x'], 
+                ['x','x'] ]).
 
-score = [ 0.5, 0.5 ]
+combinationO([ ['o','o','o'], 
+                ['o','o'] ]).
 
-evaluate(B,U) :-
-    change_mark('x'),
+evaluate([],U).
 
+evaluate([H|T],U) :-
+    board(B),
+    U1 = U,
+    horizontal_evaluation(B,H,U1,NewU1),
+    evaluate(T,NewU1),
+    U = NewU1
     .
 
 %.......................................
@@ -76,20 +81,30 @@ evaluate(B,U) :-
 % determines the value of a given board position
 %
 
-utility(B,U) :-
+utility(B,U,M) :-
     win(B,'x'),
-    U = 10, 
+    U = 1000000, 
     !
     .
 
-utility(B,U) :-
+utility(B,U,M) :-
     win(B,'o'),
-    U = (-10), 
+    U = (-1000000), 
     !
     .
 
-utility(B,U) :-
-    evaluate(B,U),
+utility(B,U,'x') :-
+    combinationX(C),
+    U1 = 0,
+    evaluate(C,U1),
+    U = U1,
+    .
+
+utility(B,U,'o') :-
+    combinationO(C),
+    U1 = 0,
+    evaluate(C,U1),
+    U = -U1,
     .
 
 %.......................................
@@ -123,7 +138,7 @@ minimax(D,B,M,S,U) :-
 % then the minimax value is the utility of the given board position
 
 minimax(D,B,M,S,U) :-
-    utility(B,U)      
+    utility(B,U,M)      
     .
 
 
@@ -140,7 +155,7 @@ best(5,B,M,[S1],S,U) :-
     move(B,S1,M,B2),        %%% apply that move to the board,
     inverse_mark(M,M2), 
     !,  
-    utility(B2,U),  %%% then search for the utility value of that move.
+    utility(B2,U,M2),  %%% then search for the utility value of that move.
     S = S1, !,
     output_value(D,S,U),
     !
@@ -154,7 +169,7 @@ best(5,B,M,[S1|T],S,U) :-
     !,
     U1 = 0,
     U2 = 0,
-    utility(B2,U1),      %%% recursively search for the utility value of that move,
+    utility(B2,U1,M2),      %%% recursively search for the utility value of that move,
     best(5,B,M,T,S2,U2),         %%% determine the best move of the remaining moves,
     output_value(D,S1,U1),      
     better(D,M,S1,U1,S2,U2,S,U)  %%% and choose the better of the two moves (based on their respective utility values)
