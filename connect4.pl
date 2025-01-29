@@ -64,7 +64,15 @@ blank_mark('e').        %%% the mark used in an empty square
 maximizing('x').        %%% the player playing x is always trying to maximize the utility of the board position
 minimizing('o').        %%% the player playing o is always trying to minimize the utility of the board position
 
-
+score_board([
+    [3, 4, 5, 5, 4, 3],
+    [4, 6, 8, 8, 6, 4],
+    [5, 8, 10, 10, 8, 5],
+    [7, 10, 13, 13, 10, 7],
+    [5, 8, 10, 10, 6, 4],
+    [4, 6, 8, 8, 6, 4],
+    [3, 4, 5, 5, 4, 3]
+]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%     MAIN PROGRAM
@@ -214,7 +222,8 @@ make_move2(computer, P, B, B2) :-
     nl, nl,
     write('Computer is thinking about its next move...'),
     player_mark(P, M),
-    random_ia(B,S),    %version 1: l'odinateur joue au hasard
+    %random_ia(B,S),                % version 1: l'odinateur joue au hasard
+    computer_best_score_move(B,S),  % version 2: l'ordinateur joue le meilleur score
     % minimax(0, B, M, S, U), %version 2: l'ordinateur joue avec minimax
     move(B, S, M, B2),
     nl, nl,
@@ -352,6 +361,40 @@ random_ia(B, S):-
     nl, nl,
     write('Invalid random number. New try.'),
     random_ia(B, S).         % Retry until the coputer makes a valid move.
+
+
+
+%.......................................
+% IA 2
+% Computer plays best score
+% On donne des scores aux cases pour savoir si elles offrent une grande possibilité de coups gagnants
+% Peu efficace car très déterministe -> un peu mieux que l'aléatoire  '
+%.......................................
+% 
+computer_best_score_move(B,S):-
+    moves(B, AvailableMoves),             % Get the list of available moves.
+    get_list_scores(AvailableMoves, L),
+    maximumListe(L,Max), !,               % find the maximum score in the list 
+    nth1(Imax,L,Max), !,                  % find the index of the maximum score in the list
+    nth1(Imax,AvailableMoves,S)           % find the best move
+.
+
+get_list_scores([],[]).
+get_list_scores([Available_T|Available_Q], [Score|L]):-
+    get_list_scores(Available_Q, L),
+    calculer_score_location(Available_T, Score)     % Pour chaque elemennt de AvailableMoves on renvoie le score associé à l'emplacement et on le stocke dans la liste L  '
+    .
+
+calculer_score_location(Available_T, Score):-
+    score_board(SB),
+    board(B),
+    nth1(Available_T, B, ColB),             % Get the column number Available_T of the board
+    nth1(Available_T, SB, ColSB),           % Get the column number Available_T of the score_board
+    nth1(I,ColB,e), !,                      % Get the first empty mark of the column ColB of the mark
+    nth1(I,ColSB,Score)                     % Get the score of the empty mark found above
+    .
+
+
 
 %.......................................
 % horizontal and vertical evaluation
@@ -592,7 +635,7 @@ place_in_column([E|Rest], M, [M|Rest]) :-  % If the head is empty, place the mar
 place_in_column([H|T], M, [H|NewT]) :-  % Otherwise, recursively check the tail.
     place_in_column(T, M, NewT).
 
-% replaces an entier column in a board
+% replaces an entire column in a board
 replace_column([_|T], 1, NewCol, [NewCol|T]) :- !.  % Replace the first column (Nth = 1).
 replace_column([H|T], N, NewCol, [H|NewT]) :-
     N > 1,
@@ -686,3 +729,11 @@ output_column_numbers :-
 % eg : random_int_1n(7,R).
 random_int_1n(N, V) :-
     V is random(N) + 1, !.
+
+
+%.......................................
+% find the maximum value in a list
+%.......................................
+
+maximumListe([X],X). %vrai si X est le seul element de la liste
+maximumListe([T|Q],X):-maximumListe(Q,M), (M<T -> X=T ; X=M). %X est assigné au plus grand des deux (à chaque fois)
