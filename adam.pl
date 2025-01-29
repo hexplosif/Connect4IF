@@ -27,9 +27,6 @@ moves(B,L) :-
     findall(N, rectangle(B,N,E), L), 
     L \= []
     
-%.......................................
-% defensive_evaluation
-%.......................................
 
 
 transpose([], []).
@@ -41,6 +38,11 @@ transpose(Matrix, [Row | TransposedTail]) :-
 extract_column([], [], []).
 extract_column([[H | T] | Rows], [H | Column], [T | RestRows]) :-
     extract_column(Rows, Column, RestRows).
+
+%.......................................
+% defensive_evaluation
+%.......................................
+
 
 % Évalue un plateau en se basant sur une approche défensive.
 % Valorise les positions qui bloquent les opportunités de l'adversaire.

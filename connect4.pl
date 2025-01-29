@@ -394,7 +394,7 @@ calculer_score_location(Available_T, Score):-
 
 
 %.......................................
-% horizontal and vertical evaluation
+% evaluation with two combination
 %.......................................
 % tools necessary to determine the evaluation of a given board position
 %
@@ -469,6 +469,64 @@ evaluate([H|T],B) :-
     .
 
 %.......................................
+% defensive_evaluation
+%.......................................
+
+
+% Évalue un plateau en se basant sur une approche défensive.
+% Valorise les positions qui bloquent les opportunités de l'adversaire.
+
+% Détecte une combinaison dangereuse pour l'adversaire
+
+combinationDanger(['e', 'e', M, M], M).
+combinationDanger([M, M, 'e', 'e'], M).
+combinationDanger(['e', M, M, 'e'], M).
+combinationDanger([ M, 'e', M, 'e'], M).
+combinationDanger(['e', M, 'e', M], M).
+combinationDanger([M, 'e', 'e', M], M).
+
+combinationDanger([M, M, M, 'e'], M).
+combinationDanger(['e', M, M, M], M).
+combinationDanger([M, 'e', M, M], M).
+combinationDanger([M, M, 'e', M], M).
+
+% Évaluation horizontale défensive
+defensive_horizontal_evaluation(Board, Opponent, U, NewU) :-
+    findall(_, (
+        member(Row, Board),
+        append([_, Comb, _], Row), 
+        combinationDanger(Comb, Opponent),
+        write(Comb), nl
+    ), Matches),
+    length(Matches, Count),
+    NewU is U - Count * 10.
+
+% Évaluation verticale défensive
+defensive_vertical_evaluation(Board, Opponent, U, NewU) :-
+    transpose(Board, TBoard),
+    defensive_horizontal_evaluation(TBoard, Opponent, U, NewU).
+
+% Évaluation diagonale défensive
+defensive_diagonal_evaluation(Board, Opponent, U, NewU) :-
+    findall(_, (
+        diagonals(Board, Diags),
+        member(Diag, Diags),
+        append([_, Comb, _], Diag), 
+        combinationDanger(Comb, Opponent),
+        write(Comb), nl
+    ), Matches),
+    length(Matches, Count),
+    NewU is U - Count * 10.
+
+% Évaluation globale défensive
+defensive_evaluation(Board, U, M) :-
+    inverse_mark(M, Opponent),
+    U2 = 0,
+    defensive_horizontal_evaluation(Board, Opponent, U2, NewU1),
+    defensive_vertical_evaluation(Board, Opponent, NewU1, NewU),
+    defensive_diagonal_evaluation(Board, Opponent, NewU, U).
+
+%.......................................
 % utility
 %.......................................
 % determines the value of a given board position
@@ -487,6 +545,7 @@ utility(B,U,M) :-
     .
 
 utility(B,U,'x') :-
+    player()
     asserta(valeurU(0)),
     % write('utility 1'),nl,
     retract(valeurU(_)),
