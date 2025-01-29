@@ -103,7 +103,7 @@ initialize :-
         ])
     ).  %%% create a blank board
 
-Tgoodbye :-
+goodbye :-
     board(B),
     nl, nl,
     write('Game over: '),
@@ -215,7 +215,7 @@ make_move2(computer, P, B, B2) :-
     write('Computer is thinking about its next move...'),
     player_mark(P, M),
     random_ia(B,S),    %version 1: l'odinateur joue au hasard
-    % minimax(0, B, M, S, U),
+    % minimax(0, B, M, S, U), %version 2: l'ordinateur joue avec minimax
     move(B, S, M, B2),
     nl, nl,
     write('Computer places '), write(M),
@@ -352,6 +352,87 @@ random_ia(B, S):-
     nl, nl,
     write('Invalid random number. New try.'),
     random_ia(B, S).         % Retry until the coputer makes a valid move.
+
+%.......................................
+% horizontal and vertical evaluation
+%.......................................
+% tools necessary to determine the evaluation of a given board position
+%
+horizontal_evaluation(Board, Comb, U, NewU) :- 
+    findall(_, (member(Row, Board), append([_, Comb, _], Row)), Matches),
+    length(Matches, Count),
+    NewU is U + Count,
+    true
+    .
+
+vertical_evaluation(Board, Comb, U, NewU) :- 
+    transpose(Board, TBoard),
+    findall(_, (member(Row, TBoard), append([_, Comb, _], Row)), Matches),
+    length(Matches, Count),
+    NewU is U + Count,
+    true
+    .
+
+%.......................................
+% evaluation
+%.......................................
+% determines the value of a given board position
+%
+combinationX([ ['x','x','x'], 
+                ['x','x'] ]).
+
+combinationO([ ['o','o','o'], 
+                ['o','o'] ]).
+
+evaluate([]).
+
+evaluate([H|T],B) :-
+    valeurU(U1),
+    horizontal_evaluation(B,H,U1,NewU1),
+    vertical_evaluation(B,H,NewU1,NewU2),
+    retract(valeurU(_)),
+    asserta(valeurU(NewU2)),
+    evaluate(T)
+    .
+
+%.......................................
+% utility
+%.......................................
+% determines the value of a given board position
+%
+
+utility(B,U,M) :-
+    win(B,'x'),
+    U = 1000000, 
+    !
+    .
+
+utility(B,U,M) :-
+    win(B,'o'),
+    U = (-1000000), 
+    !
+    .
+
+utility(B,U,'x') :-
+    write('utility 1'),nl,
+    retract(valeurU(_)),
+    asserta(valeurU(0)),
+    combinationX(C),
+    evaluate(C,B),
+    valeurU(U1),
+    U = U1
+    .
+
+utility(B,U,'o') :-
+    write('utility 2'),nl,
+    retract(valeurU(_)),
+    asserta(valeurU(0)),
+    combinationO(C),
+    evaluate(C,B),
+    valeurU(U1),
+    U = -U1
+    .
+
 %.......................................
 % minimax
 %.......................................
@@ -377,7 +458,123 @@ minimax(D,B,M,S,U) :-
 % if there are no more available moves, 
 % then the minimax value is the utility of the given board position
 minimax(D,B,M,S,U) :-
-    utility(B,U).
+    utility(B,U,M).
+
+%.......................................
+% best
+%.......................................
+% determines the best move in a given list of moves by recursively calling minimax
+%
+
+% if max depth is reached
+% if there is only one move left in the list...
+
+best(5,B,M,[S1],S,U) :-
+    write('best 1'),nl,
+    move(B,S1,M,B2),        %%% apply that move to the board,
+    inverse_mark(M,M2), 
+    !,  
+    utility(B2,U,M2),  %%% then search for the utility value of that move.
+    S = S1, !,
+    % output_value(D,S,U),
+    !
+    .
+
+% if there is more than one move in the list...
+
+best(5,B,M,[S1|T],S,U) :-
+    write('best 2'),nl,
+    move(B,S1,M,B2),             %%% apply the first move (in the list) to the board,
+    inverse_mark(M,M2), 
+    !,
+    utility(B2,U1,M2),      %%% recursively search for the utility value of that move,
+    best(5,B,M,T,S2,U2),         %%% determine the best move of the remaining moves,
+    % output_value(D,S1,U1),      
+    better(D,M,S1,U1,S2,U2,S,U)  %%% and choose the better of the two moves (based on their respective utility values)
+    .
+
+
+% if there is only one move left in the list...
+
+best(D,B,M,[S1],S,U) :-
+    write('best 3'),nl,
+    move(B,S1,M,B2),        %%% apply that move to the board,
+    inverse_mark(M,M2), 
+    !,  
+    minimax(D,B2,M2,_S,U),  %%% then recursively search for the utility value of that move.
+    S = S1, !,
+    % output_value(D,S,U),
+    !
+    .
+
+% if there is more than one move in the list...
+
+best(D,B,M,[S1|T],S,U) :-
+    write('best 4'),nl,
+    move(B,S1,M,B2),             %%% apply the first move (in the list) to the board,
+    inverse_mark(M,M2), 
+    !,
+    minimax(D,B2,M2,_S,U1),      %%% recursively search for the utility value of that move,
+    best(D,B,M,T,S2,U2),         %%% determine the best move of the remaining moves,
+    % output_value(D,S1,U1),     
+    better(D,M,S1,U1,S2,U2,S,U)  %%% and choose the better of the two moves (based on their respective utility values)
+    .
+
+%.......................................
+% better
+%.......................................
+% returns the better of two moves based on their respective utility values.
+%
+% if both moves have the same utility value, then one is chosen at random.
+
+better(D,M,S1,U1,S2,U2,     S,U) :-
+    maximizing(M),                     %%% if the player is maximizing
+    U1 > U2,                           %%% then greater is better.
+    S = S1,
+    U = U1,
+    !
+    .
+
+better(D,M,S1,U1,S2,U2,     S,U) :-
+    minimizing(M),                     %%% if the player is minimizing,
+    U1 < U2,                           %%% then lesser is better.
+    S = S1,
+    U = U1, 
+    !
+    .
+
+better(D,M,S1,U1,S2,U2,     S,U) :-
+    U1 == U2,                          %%% if moves have equal utility,
+    random_int_1n(10,R),               %%% then pick one of them at random
+    better2(D,R,M,S1,U1,S2,U2,S,U),    
+    !
+    .
+
+better(D,M,S1,U1,S2,U2,     S,U) :-        %%% otherwise, second move is better
+    S = S2,
+    U = U2,
+    !
+    .
+
+
+%.......................................
+% better2
+%.......................................
+% randomly selects two squares of the same utility value given a single probability
+%
+
+better2(D,R,M,S1,U1,S2,U2,  S,U) :-
+    R < 6,
+    S = S1,
+    U = U1, 
+    !
+    .
+
+better2(D,R,M,S1,U1,S2,U2,  S,U) :-
+    S = S2,
+    U = U2,
+    !
+    .
 
 %.......................................
 % move
