@@ -275,13 +275,59 @@ horizontal_win(B, M) :-
     isconsecutive(Row, M, 4).
 
 vertical_win(B, M) :- 
-    transpose(B, TB),
-    member(Row, TB),
+    transpose(B, TBoard),
+    member(Row, TBoard),
     isconsecutive(Row, M, 4).
+
+diagonal_win_check(B, M) :-
+    length(B, Rows),
+    length(B, Cols),
+    RowStartMax is Rows - 3,
+    ColStartMax is Cols - 3,
+    between(0, RowStartMax, RowStart),
+    between(0, ColStartMax, ColStart),
+    diagonal_win_from(B, RowStart, ColStart, M).
+
+diagonal_win_check(B, M) :-
+    length(B, Rows),
+    length(B, Cols),
+    RowStartMax is Rows - 3,
+    ColStartMax is Cols - 3,
+    between(0, RowStartMax, RowStart),
+    ColEndMax is Cols - 1,
+    between(0, ColEndMax, ColEnd),
+    diagonal_win_from_reverse(B, RowStart, ColEnd, M).
+
+diagonal_win_from(B, RowStart, ColStart, M) :-
+    nth0(RowStart, B, Row1),
+    nth0(ColStart, Row1, M),
+    Row2Start is RowStart + 1, Col2Start is ColStart + 1,
+    nth0(Row2Start, B, Row2),
+    nth0(Col2Start, Row2, M),
+    Row3Start is Row2Start + 1, Col3Start is Col2Start + 1,
+    nth0(Row3Start, B, Row3),
+    nth0(Col3Start, Row3, M),
+    Row4Start is Row3Start + 1, Col4Start is Col3Start + 1,
+    nth0(Row4Start, B, Row4),
+    nth0(Col4Start, Row4, M).
+
+diagonal_win_from_reverse(B, RowStart, ColEnd, M) :-
+    nth0(RowStart, B, Row1),
+    nth0(ColEnd, Row1, M),
+    Row2Start is RowStart + 1, Col2Start is ColEnd - 1,
+    nth0(Row2Start, B, Row2),
+    nth0(Col2Start, Row2, M),
+    Row3Start is Row2Start + 1, Col3Start is Col2Start - 1,
+    nth0(Row3Start, B, Row3),
+    nth0(Col3Start, Row3, M),
+    Row4Start is Row3Start + 1, Col4Start is Col3Start - 1,
+    nth0(Row4Start, B, Row4),
+    nth0(Col4Start, Row4, M).
 
 win(B, M) :- 
     horizontal_win(B, M);
-    vertical_win(B, M).
+    vertical_win(B, M);
+    diagonal_win_check(B, M).
 
 %.......................................
 % game_over
@@ -375,34 +421,34 @@ output_winner(_) :-
     write('No winner.').
 
 % Affiche le plateau de jeu
-output_board(Board) :-
+output_board(B) :-
     nl,
-    output_rows(Board, 6), % On commence par la 6ème ligne (le bas) sinon ça s'affiche à l'envert
+    output_rows(B, 6), % On commence par la 6ème ligne (le bas) sinon ça s'affiche à l'envert
     output_column_numbers, % Affiche les numéros de colonnes
     nl.
 
 % Affiche les lignes du bas vers le haut
 output_rows(_, 0) :- !.
-output_rows(Board, Row) :-
-    output_row(Board, Row),
+output_rows(B, Row) :-
+    output_row(B, Row),
     NextRow is Row - 1,
-    output_rows(Board, NextRow).
+    output_rows(B, NextRow).
 
 % Affiche une ligne donnée
-output_row(Board, Row) :-
+output_row(B, Row) :-
     write('|'),
-    output_cells(Board, Row, 1).
+    output_cells(B, Row, 1).
 
 % Parcourt les colonnes et affiche la cellule correspondante
 output_cells(_, _, 8) :-
     nl, !.
-output_cells(Board, Row, Col) :-
-    nth1(Col, Board, Column), % Récupère la colonne actuelle
+output_cells(B, Row, Col) :-
+    nth1(Col, B, Column), % Récupère la colonne actuelle
     nth1(Row, Column, Cell), % Récupère la cellule (contenu) à la ligne Row
     output_square(Cell), % Affiche le contenu de la cellule
     write('|'),
     NextCol is Col + 1,
-    output_cells(Board, Row, NextCol).
+    output_cells(B, Row, NextCol).
 
 
 % Affiche une cellule (X, O, ou vide)
