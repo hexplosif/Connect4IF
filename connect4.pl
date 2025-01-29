@@ -548,7 +548,7 @@ minimax(D,B,M,S,U) :-
 % if max depth is reached
 % if there is only one move left in the list...
 
-best(5,B,M,[S1],S,U) :-
+best(4,B,M,[S1],S,U) :-
     % write('best 1'),nl,
     move(B,S1,M,B2),        %%% apply that move to the board,
     inverse_mark(M,M2), 
@@ -561,13 +561,13 @@ best(5,B,M,[S1],S,U) :-
 
 % if there is more than one move in the list...
 
-best(5,B,M,[S1|T],S,U) :-
+best(4,B,M,[S1|T],S,U) :-
     % write('best 2'),nl,
     move(B,S1,M,B2),             %%% apply the first move (in the list) to the board,
     inverse_mark(M,M2), 
     !,
     utility(B2,U1,M2),      %%% recursively search for the utility value of that move,
-    best(5,B,M,T,S2,U2),         %%% determine the best move of the remaining moves,
+    best(4,B,M,T,S2,U2),         %%% determine the best move of the remaining moves,
     % output_value(D,S1,U1),      
     better(D,M,S1,U1,S2,U2,S,U)  %%% and choose the better of the two moves (based on their respective utility values)
     .
