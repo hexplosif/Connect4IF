@@ -73,6 +73,16 @@ win(B, M) :-
     vertical_win(B, M).
     diagonal_win_check(Board, M).
 
+
+% Vérifie si une ligne ne contient pas 'e'
+row_full([]).
+row_full([H|T]) :- H \= e, row_full(T).
+
+% Vérifie si tout le plateau est rempli (aucune ligne ne contient 'e')
+board_full([]).
+board_full([Row|Rest]) :- row_full(Row), board_full(Rest).
+
+
 % run :-
 %     M1 = ['x','x','x','x'],
 %     append([_, M1, _], ['x','x','x','x','e','x','x']),
