@@ -10,13 +10,13 @@ nl c'est new line (\n)
 
 Faut que le Board ce soit :
 
-[[x, o, _, _, _, _], 
- [x, x, _, _, _, _], 
- [o, o, _, _, _, _], 
- [_, _, _, _, _, _], 
- [o, _, _, _, _, _], 
- [x, _, _, _, _, _], 
- [_, _, _, _, _, _]].
+[[x, o, e, e, e, e], 
+ [x, x, e, e, e, e], 
+ [o, o, e, e, e, e], 
+ [e, e, e, e, e, e], 
+ [o, e, e, e, e, e], 
+ [x, e, e, e, e, e], 
+ [e, e, e, e, e, e]].
 
 Et ça affiche :
 
