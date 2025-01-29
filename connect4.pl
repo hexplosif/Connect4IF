@@ -550,19 +550,20 @@ defensive_evaluation(Board, U, M) :-
 % determines the value of a given board position
 %
 
-utility(B,U,M) :-
+utility(B,U,M,AI) :-
     win(B,'x'),
     U = 1000000, 
     !
     .
 
-utility(B,U,M) :-
+utility(B,U,M,AI) :-
     win(B,'o'),
     U = (-1000000), 
     !
     .
 
-utility(B,U,'x') :-
+
+utility(B,U,'x','3') :-
     player()
     asserta(valeurU(0)),
     % write('utility 1'),nl,
@@ -574,7 +575,7 @@ utility(B,U,'x') :-
     U = U1
     .
 
-utility(B,U,'o') :-
+utility(B,U,'o','3') :-
     asserta(valeurU(0)),
     % write('utility 2 first'),nl,
     retract(valeurU(_)),
@@ -587,6 +588,9 @@ utility(B,U,'o') :-
     valeurU(U1),
     U = -U1
     .
+
+utility(B, U, M,'4') :-
+    defensive_evaluation(B, M, U).
 
 %.......................................
 % minimax
@@ -614,6 +618,7 @@ minimax(D,B,M,S,U) :-
 % if there are no more available moves, 
 % then the minimax value is the utility of the given board position
 minimax(D,B,M,S,U) :-
+    player(A, computer, AI)
     utility(B,U,M).
 
 %.......................................
@@ -630,7 +635,8 @@ best(4,B,M,[S1],S,U) :-
     move(B,S1,M,B2),        %%% apply that move to the board,
     inverse_mark(M,M2), 
     !,  
-    utility(B2,U,M2),  %%% then search for the utility value of that move.
+    player(A, computer, AI)
+    utility(B2,U,M2,AI),  %%% then search for the utility value of that move.
     S = S1, !,
     % output_value(D,S,U),
     !
@@ -643,7 +649,8 @@ best(4,B,M,[S1|T],S,U) :-
     move(B,S1,M,B2),             %%% apply the first move (in the list) to the board,
     inverse_mark(M,M2), 
     !,
-    utility(B2,U1,M2),      %%% recursively search for the utility value of that move,
+    player(A, computer, AI)
+    utility(B2,U1,M2,AI),      %%% recursively search for the utility value of that move,
     best(4,B,M,T,S2,U2),         %%% determine the best move of the remaining moves,
     % output_value(D,S1,U1),      
     better(D,M,S1,U1,S2,U2,S,U)  %%% and choose the better of the two moves (based on their respective utility values)
