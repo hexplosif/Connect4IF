@@ -382,7 +382,6 @@ game_over2(P, B) :-
 % game is over if there are no blank squares left
 game_over2(P, B) :-
     moves(B, L),
-    write(L),nl,
     L == [].
 
 
@@ -535,8 +534,8 @@ defensive_horizontal_evaluation(Board, Opponent, U, NewU) :-
     findall(_, (
         member(Row, Board),
         append([_, Comb, _], Row), 
-        combinationDanger(Comb, Opponent),
-        write(Comb), nl
+        combinationDanger(Comb, Opponent)
+        % write(Comb), nl
     ), Matches),
     length(Matches, Count),
     NewU is U - Count * 10.
@@ -552,8 +551,8 @@ defensive_diagonal_evaluation(Board, Opponent, U, NewU) :-
         diagonals(Board, Diags),
         member(Diag, Diags),
         append([_, Comb, _], Diag), 
-        combinationDanger(Comb, Opponent),
-        write(Comb), nl
+        combinationDanger(Comb, Opponent)
+        % write(Comb), nl
     ), Matches),
     length(Matches, Count),
     NewU is U - Count * 10.
@@ -892,38 +891,41 @@ run_simulation(N, XWins, OWins, Draws) :-
     run_games(N, 0, 0, 0, XWins, OWins, Draws).
 
 % Base case: No more games to play, return results
-run_games(0, X, O, D, X, O, D) :- !,
-    write('DONE'), nl,
-    format("Simulation complete. Results:\nPlayer X Wins: ~d\nPlayer O Wins: ~d\nDraws: ~d\n", [X, O, D]).
+run_games(0, X, O, D, XFinal, OFinal, DFinal) :- !,
+    write('Results:'), nl,
+    write('Player X wins: '), write(X), nl,
+    write('Player O wins: '), write(O), nl,
+    write('Draws: '), write(D), nl.
 
 % Play a game, update results, and recurse
 run_games(N, X, O, D, XFinal, OFinal, DFinal) :-
     initialize,                     % Reset board for a new game
-    asserta(player(1, computer, 3)), % Assign Random AI to Player 1
-    asserta(player(2, computer, 3)), % Assign Random AI to Player 2
+    asserta( player(1, computer, 1) ), % Assign Random AI to Player 1
+    asserta( player(2, computer, 4) ), % Assign Random AI to Player 2
     nl, write('play start'),
-    play(1),                         % Start game with Player 1
-    % board(B),                        % Get final board state
-    % nl, nl,
-    % write('Game over: '),
-    % output_winner(B),
-    % (   win(B, 'x') -> X1 is X + 1, O1 is O, D1 is D  % Player X wins
-    % ;   win(B, 'o') -> X1 is X, O1 is O + 1, D1 is D  % Player O wins
-    % ;   X1 is X, O1 is O, D1 is D + 1                % Draw
-    % ),
-    retractall(board(_)),
-    retractall(player(_, _, _)),
+    play_clean(1),                         % Start game with Player 1
+    nl, write('play end'),
+    board(B),                        % Get final board state
+    output_board(B),                 % Output final board
+    write('Game over: '),
+    output_winner(B),
+    (   win(B, 'x') -> X1 is X + 1, O1 is O, D1 is D  % Player X wins
+    ;   win(B, 'o') -> X1 is X, O1 is O + 1, D1 is D  % Player O wins
+    ;   X1 is X, O1 is O, D1 is D + 1                 % Draw
+    ),
+    retract(board(_)),
+    retract(player(_, _, _)),
     N1 is N - 1,
+    nl, write('Games remaining: '), write(N1), nl,
     run_games(N1, X1, O1, D1, XFinal, OFinal, DFinal).
-
 
 play_clean(P) :-
     board(B), !,
-    not(game_over(P, B)), !,
-    make_move(P, B), !,
-    next_player(P, P2), !,
-    play(P2), !
-    .
+    (game_over(P, B) -> true ;  % Stop if game is over
+        make_move(P, B), !,
+        next_player(P, P2), !,
+        play_clean(P2)).
+
 
 % Entry point to start simulation with N games
 simulate(N) :-
