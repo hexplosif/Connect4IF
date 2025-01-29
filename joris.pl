@@ -65,14 +65,15 @@ combinationX([ ['x','x','x'],
 combinationO([ ['o','o','o'], 
                 ['o','o'] ]).
 
-evaluate([],U).
+evaluate([]).
 
-evaluate([H|T],U) :-
-    board(B),
-    U1 = U,
+evaluate([H|T],B) :-
+    valeurU(U1),
     horizontal_evaluation(B,H,U1,NewU1),
-    evaluate(T,NewU1),
-    U = NewU1
+    vertical_evaluation(B,H,NewU1,NewU2),
+    retract(valeurU(_)),
+    asserta(valeurU(NewU2)),
+    evaluate(T)
     .
 
 %.......................................
@@ -94,16 +95,20 @@ utility(B,U,M) :-
     .
 
 utility(B,U,'x') :-
+    retract(valeurU(_)),
+    asserta(valeurU(0)),
     combinationX(C),
-    U1 = 0,
-    evaluate(C,U1),
+    evaluate(C,B),
+    valeurU(U1),
     U = U1,
     .
 
 utility(B,U,'o') :-
+    retract(valeurU(_)),
+    asserta(valeurU(0)),
     combinationO(C),
-    U1 = 0,
-    evaluate(C,U1),
+    evaluate(C,B),
+    valeurU(U1),
     U = -U1,
     .
 
