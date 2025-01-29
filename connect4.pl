@@ -222,10 +222,8 @@ make_move2(computer, P, B, B2) :-
     nl, nl,
     write('Computer is thinking about its next move...'),
     player_mark(P, M),
-    %% random_ia(B,S),                % version 1: l'odinateur joue au hasard
-    computer_best_score_move(B,S),  % version 2: l'ordinateur joue le meilleur score
+    % random_ia(B,S),    %version 1: l'odinateur joue au hasard
     minimax(0, B, M, S, U), %version 2: l'ordinateur joue avec minimax
-    write('il a fait un mouvement !'),nl,
     move(B, S, M, B2),
     nl, nl,
     write('Computer places '), write(M),
@@ -363,8 +361,6 @@ random_ia(B, S):-
     write('Invalid random number. New try.'),
     random_ia(B, S).         % Retry until the coputer makes a valid move.
 
-
-
 %.......................................
 % IA 2
 % Computer plays best score
@@ -405,21 +401,52 @@ calculer_score_location(Available_T, Score):-
 horizontal_evaluation(Board, Comb, U, NewU) :- 
     findall(_, (member(Row, Board), append([_, Comb, _], Row)), Matches),
     length(Matches, Count),
-    NewU is U + Count,
-    true
+    NewU is U + Count
     .
 
 vertical_evaluation(Board, Comb, U, NewU) :- 
     transpose(Board, TBoard),
     findall(_, (member(Row, TBoard), append([_, Comb, _], Row)), Matches),
     length(Matches, Count),
-    NewU is U + Count,
-    true
+    NewU is U + Count
     .
 
-%.......................................
+diagonal_evaluation(Board, Comb, U, NewU) :- 
+    diagonals(Board, Diags),
+    findall(_, (member(Diag, Diags), append([_, Comb, _], Diag)), Matches),
+    length(Matches, Count),
+    NewU is U + Count
+    .
+
+% Récupération des diagonales d'une grille
+diagonals(Board, Diags) :-
+    findall(Diag, diagonal(Board, Diag), Diags).
+
+diagonal(Board, Diag) :-
+    length(Board, N),
+    between(0, N, K),
+    findall(Elem, (
+        between(0, N, I),
+        J is I + K,
+        nth0(I, Board, Row),
+        nth0(J, Row, Elem)
+    ), Diag),
+    Diag \= [].
+
+diagonal(Board, Diag) :-
+    length(Board, N),
+    between(0, N, K),
+    findall(Elem, (
+        between(0, N, I),
+        J is I - K,
+        nth0(I, Board, Row),
+        nth0(J, Row, Elem)
+    ), Diag),
+    Diag \= [].
+
+% .......................................
 % evaluation compter les doubles et triples
-%.......................................
+% .......................................
 % determines the value of a given board position
 %
 combinationX([ ['x','x','x'], 
@@ -435,8 +462,9 @@ evaluate([H|T],B) :-
     valeurU(U1),
     horizontal_evaluation(B,H,U1,NewU1),
     vertical_evaluation(B,H,NewU1,NewU2),
+    diagonal_evaluation(B,H,NewU1,NewU3),
     retract(valeurU(_)),
-    asserta(valeurU(NewU2)),
+    asserta(valeurU(NewU3)),
     evaluate(T,B)
     .
 
@@ -644,7 +672,7 @@ place_in_column([E|Rest], M, [M|Rest]) :-  % If the head is empty, place the mar
 place_in_column([H|T], M, [H|NewT]) :-  % Otherwise, recursively check the tail.
     place_in_column(T, M, NewT).
 
-% replaces an entire column in a board
+% replaces an entier column in a board
 replace_column([_|T], 1, NewCol, [NewCol|T]) :- !.  % Replace the first column (Nth = 1).
 replace_column([H|T], N, NewCol, [H|NewT]) :-
     N > 1,
