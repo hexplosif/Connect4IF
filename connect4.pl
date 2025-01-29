@@ -246,23 +246,25 @@ make_move2(human, P, B, B2) :-
 % Computer player makes a move using minimax algorithm.
 make_move2(computer, P, B, B2) :-
     nl, nl,
-    write('Computer is thinking about its next move...'),
     player_mark(P, M),
     player(P,computer,IA),
     jeu_IA(IA, B, M, S, U),
-    
     move(B, S, M, B2),
     nl, nl,
     write('Computer places '), write(M),
     write(' in column '), write(S), write('.').
 
 jeu_IA(1, B, M, S, U):-
+    write('Computer is thinking about its next move...'),
     random_ia(B,S).    %version 1: l'odinateur joue au hasard
 
 jeu_IA(2, B, M, S, U):-
+    write('Computer is thinking about its next move...'),
+
     computer_best_score_move(B,S).
 
 jeu_IA(_, B, M, S, U):-
+    write('Computer is thinking about its next move...'),
     minimax(0, B, M, S, U). %version 3 ou 4: l'ordinateur joue avec minimax
 
 
@@ -370,7 +372,6 @@ win(B, M) :-
 %.......................................
 % determines when the game is over
 game_over(P, B) :-
-    write('game over'),
     game_over2(P, B).
 
 % game is over if opponent wins
@@ -380,8 +381,8 @@ game_over2(P, B) :-
 
 % game is over if there are no blank squares left
 game_over2(P, B) :-
-    write('game over 2'),
     moves(B, L),
+    write(L),nl,
     L == [].
 
 
