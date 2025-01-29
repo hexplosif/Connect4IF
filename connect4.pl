@@ -117,7 +117,7 @@ goodbye :-
     write('Game over: '),
     output_winner(B),
     retract(board(_)),
-    retract(player(_,_)),
+    retract(player(_,_,_)),
     read_play_again(V), !,
     (V == 'y'), !,
     run.
@@ -141,32 +141,32 @@ read_players :-
     set_players(N).
 
 set_players(0) :- 
-    write('What IA do you want for the first AI ? (1, 2, 3, 4)'),
-    write('1: Random IA'),
-    write('2: Weighted-grid IA'),
-    write('2: Offensive IA'),
-    write('3: Defensive IA'),
-    read(IA),
-    write('What IA do you want for the second AI ? (1, 2, 3, 4)'),
-    write('1: Random IA'),
-    write('2: Weighted-grid IA'),
-    write('2: Offensive IA'),
-    write('3: Defensive IA'),
-    read(IA2),
-    asserta( player(1, computer, IA) ),
-    asserta( player(2, computer, IA2) ), !.
+    write('What AI do you want for the first AI ? (1, 2, 3, 4)\n'),
+    write('1: Random AI\n'),
+    write('2: Weighted-grid AI\n'),
+    write('3: Offensive AI\n'),
+    write('4: Defensive AI\n'),
+    read(AI),
+    write('What AI do you want for the second AI ? (1, 2, 3, 4)\n'),
+    write('1: Random AI\n'),
+    write('2: Weighted-grid AI\n'),
+    write('3: Offensive AI\n'),
+    write('4: Defensive AI\n'),
+    read(AI2),
+    asserta( player(1, computer, AI) ),
+    asserta( player(2, computer, AI2) ), !.
 
 set_players(1) :-
     nl,
     write('Is human playing x or o (x moves first)? '),
     read(M),
-    write('What IA do you want to play against? (1, 2, 3, 4)'),
-    write('1: Random IA'),
-    write('2: Weighted-grid IA'),
-    write('2: Offensive IA'),
-    write('3: Defensive IA'),
-    read(IA),
-    human_playing(M, IA), !.
+    write('What AI do you want to play against? (1, 2, 3, 4)'),
+    write('1: Random AI'),
+    write('2: Weighted-grid AI'),
+    write('3: Offensive AI'),
+    write('4: Defensive AI'),
+    read(AI),
+    human_playing(M, AI), !.
 
 set_players(2) :- 
     asserta( player(1, human, 0) ),
@@ -177,14 +177,14 @@ set_players(_) :-
     write('Please enter 0, 1, or 2.'),
     read_players.
 
-human_playing(M, IA) :- 
+human_playing(M, AI) :- 
     (M == 'x'),
     asserta( player(1, human, 0) ),
-    asserta( player(2, computer, IA) ), !.
+    asserta( player(2, computer, AI) ), !.
 
 human_playing(M) :- 
     (M == 'o'),
-    asserta( player(1, computer, IA) ),
+    asserta( player(1, computer, AI) ),
     asserta( player(2, human, 0) ), !.
 
 human_playing(_) :-
@@ -214,7 +214,7 @@ play(P) :-
 % then applies that move to the given board.
 
 make_move(P, B) :-
-    player(P, Type),
+    player(P, Type, AI),
     make_move2(Type, P, B, B2),  % Delegate the move based on player type (human or computer).
     retract(board(_)),           % Update the current board.
     asserta(board(B2)).
@@ -365,7 +365,7 @@ game_over2(P, B) :-
 
 
 %.......................................
-% IA random
+% AI random
 %.......................................
 % The randomIA algorithm plays.
 random_ia(B, S):-
@@ -380,7 +380,7 @@ random_ia(B, S):-
     random_ia(B, S).         % Retry until the coputer makes a valid move.
 
 %.......................................
-% IA 2
+% AI 2
 % Computer plays best score
 % On donne des scores aux cases pour savoir si elles offrent une grande possibilité de coups gagnants
 % Peu efficace car très déterministe -> un peu mieux que l'aléatoire  '
@@ -704,10 +704,10 @@ replace_column([H|T], N, NewCol, [H|NewT]) :-
 
 output_players :- 
     nl,
-    player(1, V1),
+    player(1, V1, AI),
     write('Player 1 is '), write(V1),  %%% either human or computer
     nl,
-    player(2, V2),
+    player(2, V2, AI),
     write('Player 2 is '), write(V2), !.  %%% either human or computer
 
 output_winner(B) :-
