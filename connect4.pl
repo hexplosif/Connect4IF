@@ -213,6 +213,14 @@ play(P) :-
 % Requests the next move from human/computer, 
 % then applies that move to the given board.
 
+% Vérifie si une ligne ne contient pas 'e'
+row_full([]).
+row_full([H|T]) :- H \= 'e', row_full(T).
+
+% Vérifie si tout le plateau est rempli (aucune ligne ne contient 'e')
+board_full([]).
+board_full([Row|Rest]) :- row_full(Row), board_full(Rest).
+
 make_move(P, B) :-
     player(P, Type, AI),
     make_move2(Type, P, B, B2),  % Delegate the move based on player type (human or computer).
@@ -240,12 +248,23 @@ make_move2(computer, P, B, B2) :-
     nl, nl,
     write('Computer is thinking about its next move...'),
     player_mark(P, M),
-    % random_ia(B,S),    %version 1: l'odinateur joue au hasard
-    minimax(0, B, M, S, U), %version 2: l'ordinateur joue avec minimax
+    player(P,computer,IA),
+    jeu_IA(IA, B, M, S, U),
+    
     move(B, S, M, B2),
     nl, nl,
     write('Computer places '), write(M),
     write(' in column '), write(S), write('.').
+
+jeu_IA(1, B, M, S, U):-
+    random_ia(B,S).    %version 1: l'odinateur joue au hasard
+
+jeu_IA(2, B, M, S, U):-
+    computer_best_score_move(B,S).
+
+jeu_IA(_, B, M, S, U):-
+    minimax(0, B, M, S, U). %version 3 ou 4: l'ordinateur joue avec minimax
+
 
 %.......................................
 % moves
@@ -351,6 +370,7 @@ win(B, M) :-
 %.......................................
 % determines when the game is over
 game_over(P, B) :-
+    write('game over'),
     game_over2(P, B).
 
 % game is over if opponent wins
@@ -360,6 +380,7 @@ game_over2(P, B) :-
 
 % game is over if there are no blank squares left
 game_over2(P, B) :-
+    write('game over 2'),
     moves(B, L),
     L == [].
 
@@ -562,9 +583,13 @@ utility(B,U,M,AI) :-
     !
     .
 
+utility(B,U,M,AI) :-
+    board_full(B),
+    U = 0, 
+    !
+    .
 
-utility(B,U,'x','3') :-
-    player()
+utility(B,U,'x',3) :-
     asserta(valeurU(0)),
     % write('utility 1'),nl,
     retract(valeurU(_)),
@@ -575,7 +600,7 @@ utility(B,U,'x','3') :-
     U = U1
     .
 
-utility(B,U,'o','3') :-
+utility(B,U,'o',3) :-
     asserta(valeurU(0)),
     % write('utility 2 first'),nl,
     retract(valeurU(_)),
@@ -589,7 +614,7 @@ utility(B,U,'o','3') :-
     U = -U1
     .
 
-utility(B, U, M,'4') :-
+utility(B, U, M,4) :-
     defensive_evaluation(B, M, U).
 
 %.......................................
@@ -618,8 +643,8 @@ minimax(D,B,M,S,U) :-
 % if there are no more available moves, 
 % then the minimax value is the utility of the given board position
 minimax(D,B,M,S,U) :-
-    player(A, computer, AI)
-    utility(B,U,M).
+    player(A, computer, AI),
+    utility(B,U,M,AI).
 
 %.......................................
 % best
@@ -635,7 +660,7 @@ best(4,B,M,[S1],S,U) :-
     move(B,S1,M,B2),        %%% apply that move to the board,
     inverse_mark(M,M2), 
     !,  
-    player(A, computer, AI)
+    player(A, computer, AI),
     utility(B2,U,M2,AI),  %%% then search for the utility value of that move.
     S = S1, !,
     % output_value(D,S,U),
@@ -649,7 +674,7 @@ best(4,B,M,[S1|T],S,U) :-
     move(B,S1,M,B2),             %%% apply the first move (in the list) to the board,
     inverse_mark(M,M2), 
     !,
-    player(A, computer, AI)
+    player(A, computer, AI),
     utility(B2,U1,M2,AI),      %%% recursively search for the utility value of that move,
     best(4,B,M,T,S2,U2),         %%% determine the best move of the remaining moves,
     % output_value(D,S1,U1),      
