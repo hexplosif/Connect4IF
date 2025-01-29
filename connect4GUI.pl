@@ -44,6 +44,12 @@ asserta( player(P, Type) ) - indicates which players are human/computer.
 */
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%     MODULES
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+:- use_module(library(pce)).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%     FACTS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -76,7 +82,9 @@ minimizing('o').        %%% the player playing o is always trying to minimize th
 
 run :-
     hello,          %%% Display welcome message, initialize game
-    play(1),        %%% Play the game starting with player 1
+    board(B),       %%% Get the current board
+    create_board_window(W, B), % Create the board window
+    play(1, W),        %%% Play the game starting with player 1
     goodbye.        %%% Display end of game message
 
 run :-
@@ -103,7 +111,7 @@ initialize :-
         ])
     ).  %%% create a blank board
 
-Tgoodbye :-
+goodbye :-
     board(B),
     nl, nl,
     write('Game over: '),
@@ -172,13 +180,14 @@ human_playing(_) :-
 %.......................................
 % main function
 
-play(P) :-
+play(P, W) :-
     board(B), !,
     output_board(B), !,
+    update_board(W, B), !,
     not(game_over(P, B)), !,
     make_move(P, B), !,
     next_player(P, P2), !,
-    play(P2), !
+    play(P2, W), !
     .
 
 %.......................................
@@ -214,7 +223,7 @@ make_move2(computer, P, B, B2) :-
     nl, nl,
     write('Computer is thinking about its next move...'),
     player_mark(P, M),
-    random_ia(B,S),    %version 1: l'odinateur joue au hasard
+    random_int_1n(7, S), %version 1: l'odinateur joue au hasard
     % minimax(0, B, M, S, U),
     move(B, S, M, B2),
     nl, nl,
@@ -291,21 +300,6 @@ game_over2(P, B) :-
     moves(B, L),
     L == [].
 
-
-%.......................................
-% IA random
-%.......................................
-% The randomIA algorithm plays.
-random_ia(B, S):-
-    random_int_1n(7,S),                   % Read the square index from the player.
-    moves(B, AvailableMoves),             % Get the list of available moves.
-    member(S, AvailableMoves).           % Check if the selected square is valid.
-
-% Handle invalid move by computer.
-random_ia(B, S):-
-    nl, nl,
-    write('Invalid random number. New try.'),
-    random_ia(B, S).         % Retry until the coputer makes a valid move.
 %.......................................
 % minimax
 %.......................................
@@ -430,6 +424,103 @@ output_column_numbers :-
     write('---------------'), nl,
     write(' 1 2 3 4 5 6 7'), nl.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% GUI
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+create_menu_window :-
+    new(W, dialog('Connect4IF')), 
+    send(W, size, size(550, 150)),
+    
+    add_colored_circles(W, 50),
+
+    send(W, background, colour(black)),  
+
+    send(W, append, new(Titre, text('Connect4IF'))),
+    send(Titre, font, font(helvetica, bold, 26)), 
+    send(Titre, colour, colour(white)),  
+    
+    send(W, append, new(Button1, button('Start', message(@prolog, start_game, W)))),
+    send(W, append, new(Button4, button('Quit', message(W, destroy)))),
+
+    % Ouvrir la fenêtre
+    send(W, open).
+
+start_game(W) :-
+    send(W, destroy),
+    run.
+
+% Ajouter des cercles alternant entre rouge et bleu
+add_colored_circles(W, N) :-
+    add_colored_circles(W, N, 0).
+
+add_colored_circles(_, 0, _) :- !.  % Arrêter quand N atteint 0
+add_colored_circles(W, N, Counter) :-
+    RandomX is random(550),  % Générer une position X aléatoire
+    RandomY is random(150),  % Générer une position Y aléatoire
+    send(W, display, new(Circle, circle(10))),  % Créer un cercle de rayon 10
+    
+    % Alterner les couleurs entre rouge et bleu
+    (   0 is Counter mod 2
+    ->  send(Circle, fill_pattern, colour(red))  % Rouge pour les cercles pairs
+    ;   send(Circle, fill_pattern, colour(blue))  % Bleu pour les cercles impairs
+    ),
+    
+    send(Circle, move, point(RandomX, RandomY)),  % Déplacer à la position aléatoire
+    NewCounter is Counter + 1,
+    NewN is N - 1,
+    add_colored_circles(W, NewN, NewCounter).  % Rappel pour ajouter le prochain cercle
+
+
+% Crée une fenêtre pour afficher le plateau
+create_board_window(W, B) :-
+    new(W, picture('Connect4IF')),
+    send(W, size, size(355, 305)),
+    send(W, open),
+    send(W, background, colour(black)),
+    draw_board(W, B, 6, 7).
+
+% Dessine le plateau sur la fenêtre
+draw_board(W, B, Rows, Cols) :-
+    draw_cells(W, B, Rows, Cols, Rows, 1).
+
+% Parcourt les cellules pour les dessiner
+draw_cells(_, _, 0, _, _, _) :- !.
+draw_cells(W, B, Row, Cols, TotalRows, TotalCols) :-
+    draw_row(W, B, Row, Cols, TotalRows, TotalCols),
+    NextRow is Row - 1,
+    draw_cells(W, B, NextRow, Cols, TotalRows, TotalCols).
+
+% Dessine une ligne donnée
+draw_row(_, _, _, 0, _, _) :- !.
+draw_row(W, B, Row, Col, TotalRows, TotalCols) :-
+    nth1(Col, B, Column),
+    nth1(Row, Column, M),
+    CellY is (TotalRows - Row) * 50 + 15,
+    CellX is (Col - 1) * 50 + 15,
+    draw_cell(W, M, CellX, CellY),
+    NextCol is Col - 1,
+    draw_row(W, B, Row, NextCol, TotalRows, TotalCols).
+
+% Dessine une cellule donnée
+draw_cell(W, M, X, Y) :-
+    (   M == x
+    ->  new(Circle, circle(40)),
+        send(Circle, fill_pattern, colour(red)),
+        send(W, display, Circle, point(X, Y))
+    ;   M == o
+    ->  new(Circle, circle(40)),
+        send(Circle, fill_pattern, colour(blue)),
+        send(W, display, Circle, point(X, Y))
+    ;   new(Box, box(40, 40)),
+        send(Box, fill_pattern, colour(grey20)),
+        send(W, display, Box, point(X, Y))
+    ).
+
+update_board(W, B) :-
+    send(W, clear),
+    draw_board(W, B, 6, 7),
+    send(W, expose).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% UTILS
@@ -443,3 +534,9 @@ output_column_numbers :-
 % eg : random_int_1n(7,R).
 random_int_1n(N, V) :-
     V is random(N) + 1, !.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%     MAIN
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+:- create_menu_window.
