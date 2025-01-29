@@ -166,7 +166,8 @@ set_players(1) :-
     write('3: Offensive AI\n'),
     write('4: Defensive AI\n'),
     read(AI),
-    human_playing(M, AI),!.
+    write('AI: '), write(AI),
+    human_playing(M, AI), !.
 
 set_players(2) :- 
     asserta( player(1, human, 0) ),
@@ -182,7 +183,7 @@ human_playing(M, AI) :-
     asserta( player(1, human, 0) ),
     asserta( player(2, computer, AI) ), !.
 
-human_playing(M) :- 
+human_playing(M, AI) :- 
     (M == 'o'),
     asserta( player(1, computer, AI) ),
     asserta( player(2, human, 0) ), !.
@@ -199,7 +200,6 @@ human_playing(_) :-
 % main function
 
 play(P) :-
-write('rzfegh'),
     board(B), !,
     output_board(B), !,
     not(game_over(P, B)), !,
@@ -252,10 +252,9 @@ make_move2(computer, P, B, B2) :-
     player(P,Z,IA),
     % write(IA),
     jeu_IA(IA, B, M, S, U),
-
-    minimax(0, B, M, S, U), %version 3 ou 4: l'ordinateur joue avec minimax
-
+    write('Computer places '), write(M),
     move(B, S, M, B2),
+    write(' in column '), write(S), write('.'),
     nl, nl,
     write('Computer places '), write(M),
     write(' in column '), write(S), write('.').
@@ -395,7 +394,8 @@ game_over2(P, B) :-
 random_ia(B, S):-
     random_int_1n(7,S),                   % Read the square index from the player.
     moves(B, AvailableMoves),             % Get the list of available moves.
-    member(S, AvailableMoves).           % Check if the selected square is valid.
+    member(S, AvailableMoves),
+    !.           % Check if the selected square is valid.
 
 % Handle invalid move by computer.
 random_ia(B, S):-
@@ -537,11 +537,10 @@ defensive_horizontal_evaluation(Board, Opponent, U, NewU) :-
     findall(_, (
         member(Row, Board),
         append([_, Comb, _], Row), 
-        combinationDanger(Comb, Opponent),
-        write(Comb), nl
+        combinationDanger(Comb, Opponent)
     ), Matches),
     length(Matches, Count),
-    NewU is U - Count * 10.
+    NewU is U + Count * 10.
 
 % Évaluation verticale défensive
 defensive_vertical_evaluation(Board, Opponent, U, NewU) :-
@@ -554,8 +553,7 @@ defensive_diagonal_evaluation(Board, Opponent, U, NewU) :-
         diagonals(Board, Diags),
         member(Diag, Diags),
         append([_, Comb, _], Diag), 
-        combinationDanger(Comb, Opponent),
-        write(Comb), nl
+        combinationDanger(Comb, Opponent)
     ), Matches),
     length(Matches, Count),
     NewU is U - Count * 10.
@@ -600,7 +598,8 @@ utility(B,U,'x',3) :-
     combinationX(C),
     evaluate(C,B),
     valeurU(U1),
-    U = U1
+    U = U1,
+    !
     .
 
 utility(B,U,'o',3) :-
@@ -614,11 +613,12 @@ utility(B,U,'o',3) :-
     % write(C),
     evaluate(C,B),
     valeurU(U1),
-    U = -U1
+    U = -U1,
+    !
     .
 
-utility(B, U, M,4) :-
-    defensive_evaluation(B, M, U).
+utility(B, U, M, 4) :-
+    defensive_evaluation(B, U, M).
 
 %.......................................
 % minimax
@@ -797,12 +797,12 @@ replace_column([H|T], N, NewCol, [H|NewT]) :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 output_players :- 
-    nl,
-    player(1, V1, AI),
-    write('Player 1 is '), write(V1),  %%% either human or computer
-    nl,
-    player(2, V2, AI),
-    write('Player 2 is '), write(V2), !.  %%% either human or computer
+    write('Player 1: '),
+    player(1, Type1, AI1),
+    write(Type1), write(' '), write(AI1), nl,
+    write('Player 2: '),
+    player(2, Type2, AI2),
+    write(Type2), write(' '), write(AI2), nl.
 
 output_winner(B) :-
     win(B,x),
@@ -886,3 +886,8 @@ random_int_1n(N, V) :-
 
 maximumListe([X],X). %vrai si X est le seul element de la liste
 maximumListe([T|Q],X):-maximumListe(Q,M), (M<T -> X=T ; X=M). %X est assigné au plus grand des deux (à chaque fois)
+
+
+
+
+:- run. % Start the game.
