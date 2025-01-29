@@ -214,12 +214,13 @@ make_move2(computer, P, B, B2) :-
     nl, nl,
     write('Computer is thinking about its next move...'),
     player_mark(P, M),
-    random_ia(B,S),    %version 1: l'odinateur joue au hasard
-    % minimax(0, B, M, S, U), %version 2: l'ordinateur joue avec minimax
+    % random_ia(B,S),    %version 1: l'odinateur joue au hasard
+    minimax(0, B, M, S, U), %version 2: l'ordinateur joue avec minimax
+    write('il a fait un mouvement !'),nl,
     move(B, S, M, B2),
     nl, nl,
     write('Computer places '), write(M),
-    write(' in square '), write(S), write('.').
+    write(' in column '), write(S), write('.').
 
 %.......................................
 % moves
@@ -374,7 +375,7 @@ vertical_evaluation(Board, Comb, U, NewU) :-
     .
 
 %.......................................
-% evaluation
+% evaluation compter les doubles et triples
 %.......................................
 % determines the value of a given board position
 %
@@ -384,15 +385,16 @@ combinationX([ ['x','x','x'],
 combinationO([ ['o','o','o'], 
                 ['o','o'] ]).
 
-evaluate([]).
+evaluate([],B).
 
 evaluate([H|T],B) :-
+    % write('debut evaluation'),
     valeurU(U1),
     horizontal_evaluation(B,H,U1,NewU1),
     vertical_evaluation(B,H,NewU1,NewU2),
     retract(valeurU(_)),
     asserta(valeurU(NewU2)),
-    evaluate(T)
+    evaluate(T,B)
     .
 
 %.......................................
@@ -414,7 +416,8 @@ utility(B,U,M) :-
     .
 
 utility(B,U,'x') :-
-    write('utility 1'),nl,
+    asserta(valeurU(0)),
+    % write('utility 1'),nl,
     retract(valeurU(_)),
     asserta(valeurU(0)),
     combinationX(C),
@@ -424,10 +427,14 @@ utility(B,U,'x') :-
     .
 
 utility(B,U,'o') :-
-    write('utility 2'),nl,
-    retract(valeurU(_)),
     asserta(valeurU(0)),
+    % write('utility 2 first'),nl,
+    retract(valeurU(_)),
+    % write('utility 2'),nl,
+    asserta(valeurU(0)),
+    % write('utility 2'),nl,
     combinationO(C),
+    % write(C),
     evaluate(C,B),
     valeurU(U1),
     U = -U1
@@ -451,6 +458,7 @@ minimax(D,[ [E,E,E,E,E,E],
     S = 4, !.
 
 minimax(D,B,M,S,U) :-
+    % write('minimax 2'),nl,
     D2 is D + 1,
     moves(B,L), !,          %%% get the list of available moves
     best(D2,B,M,L,S,U), !.  %%% recursively determine the best available move
@@ -470,7 +478,7 @@ minimax(D,B,M,S,U) :-
 % if there is only one move left in the list...
 
 best(5,B,M,[S1],S,U) :-
-    write('best 1'),nl,
+    % write('best 1'),nl,
     move(B,S1,M,B2),        %%% apply that move to the board,
     inverse_mark(M,M2), 
     !,  
@@ -483,7 +491,7 @@ best(5,B,M,[S1],S,U) :-
 % if there is more than one move in the list...
 
 best(5,B,M,[S1|T],S,U) :-
-    write('best 2'),nl,
+    % write('best 2'),nl,
     move(B,S1,M,B2),             %%% apply the first move (in the list) to the board,
     inverse_mark(M,M2), 
     !,
@@ -497,7 +505,7 @@ best(5,B,M,[S1|T],S,U) :-
 % if there is only one move left in the list...
 
 best(D,B,M,[S1],S,U) :-
-    write('best 3'),nl,
+    % write('best 3'),nl,
     move(B,S1,M,B2),        %%% apply that move to the board,
     inverse_mark(M,M2), 
     !,  
@@ -510,9 +518,10 @@ best(D,B,M,[S1],S,U) :-
 % if there is more than one move in the list...
 
 best(D,B,M,[S1|T],S,U) :-
-    write('best 4'),nl,
+    % write('best 4'),nl,
     move(B,S1,M,B2),             %%% apply the first move (in the list) to the board,
-    inverse_mark(M,M2), 
+    % write(B),nl,nl,
+    inverse_mark(M,M2),
     !,
     minimax(D,B2,M2,_S,U1),      %%% recursively search for the utility value of that move,
     best(D,B,M,T,S2,U2),         %%% determine the best move of the remaining moves,
