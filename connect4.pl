@@ -252,9 +252,7 @@ make_move2(computer, P, B, B2) :-
     player(P,Z,IA),
     % write(IA),
     jeu_IA(IA, B, M, S, U),
-    write('Computer places '), write(M),
     move(B, S, M, B2),
-    write(' in column '), write(S), write('.'),
     nl, nl,
     write('Computer places '), write(M),
     write(' in column '), write(S), write('.').
