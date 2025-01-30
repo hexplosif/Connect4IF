@@ -246,18 +246,14 @@ make_move2(human, P, B, B2) :-
 
 % Computer player makes a move using minimax algorithm.
 make_move2(computer, P, B, B2) :-
-    nl, nl,
-    write('Computer is thinking about its next move...'),
+    % nl, nl, write('Computer is thinking about its next move...'),
     player_mark(P, M),
     player(P,Z,IA),
     % write(IA),
     jeu_IA(IA, B, M, S, U),
-    write('Computer places '), write(M),
-    move(B, S, M, B2),
-    write(' in column '), write(S), write('.'),
-    nl, nl,
-    write('Computer places '), write(M),
-    write(' in column '), write(S), write('.').
+    move(B, S, M, B2).
+    % write('Computer places '), write(M),
+    % write(' in column '), write(S), write('.').
 
 jeu_IA(1, B, M, S, U):-
     random_ia(B,S).    %version 1: l'odinateur joue au hasard
@@ -398,8 +394,9 @@ random_ia(B, S):-
 
 % Handle invalid move by computer.
 random_ia(B, S):-
+    moves(B, AvailableMoves),             % Get the list of available moves.
     nl, nl,
-    write('Invalid random number. New try.'),
+    write('Invalid random number. New try. '), write(AvailableMoves),
     random_ia(B, S).         % Retry until the coputer makes a valid move.
 
 %.......................................
@@ -902,11 +899,11 @@ run_games(0, X, O, D, XFinal, OFinal, DFinal) :- !,
 % Play a game, update results, and recurse
 run_games(N, X, O, D, XFinal, OFinal, DFinal) :-
     initialize,                     % Reset board for a new game
-    asserta( player(1, computer, 1) ), % Assign Random AI to Player 1
-    asserta( player(2, computer, 4) ), % Assign Random AI to Player 2
-    nl, write('play start'),
+    asserta( player(1, computer, 2) ), % Assign Random AI to Player 1
+    asserta( player(2, computer, 2) ), % Assign Random AI to Player 2
+    % nl, write('play start'),
     play_clean(1),                         % Start game with Player 1
-    nl, write('play end'),
+    % nl, write('play end'),
     board(B),                        % Get final board state
     output_board(B),                 % Output final board
     write('Game over: '),
@@ -936,53 +933,4 @@ simulate(N) :-
 
 
 
-% Run multiple games between two Random AIs and track results
-run_simulation(N, XWins, OWins, Draws) :-
-    run_games(N, 0, 0, 0, XWins, OWins, Draws).
-
-% Base case: No more games to play, return results
-run_games(0, X, O, D, XFinal, OFinal, DFinal) :- !,
-    write('Results:'), nl,
-    write('Player X wins: '), write(X), nl,
-    write('Player O wins: '), write(O), nl,
-    write('Draws: '), write(D), nl.
-
-% Play a game, update results, and recurse
-run_games(N, X, O, D, XFinal, OFinal, DFinal) :-
-    initialize,                     % Reset board for a new game
-    asserta( player(1, computer, 1) ), % Assign Random AI to Player 1
-    asserta( player(2, computer, 4) ), % Assign Random AI to Player 2
-    nl, write('play start'),
-    play_clean(1),                         % Start game with Player 1
-    nl, write('play end'),
-    board(B),                        % Get final board state
-    output_board(B),                 % Output final board
-    write('Game over: '),
-    output_winner(B),
-    (   win(B, 'x') -> X1 is X + 1, O1 is O, D1 is D  % Player X wins
-    ;   win(B, 'o') -> X1 is X, O1 is O + 1, D1 is D  % Player O wins
-    ;   X1 is X, O1 is O, D1 is D + 1                 % Draw
-    ),
-    retract(board(_)),
-    retract(player(_, _, _)),
-    N1 is N - 1,
-    nl, write('Games remaining: '), write(N1), nl,
-    run_games(N1, X1, O1, D1, XFinal, OFinal, DFinal).
-
-play_clean(P) :-
-    board(B), !,
-    (game_over(P, B) -> true ;  % Stop if game is over
-        make_move(P, B), !,
-        next_player(P, P2), !,
-        play_clean(P2)).
-
-
-% Entry point to start simulation with N games
-simulate(N) :-
-    nl, nl,
-    run_simulation(N, XWins, OWins, Draws).
-
-
-
-
-:- run. % Start the game.
+% :- run. % Start the game.
