@@ -10,6 +10,20 @@ MANTZARIDES Guillaume
 SCHLEE Adam
 STEPHAN Justine
 
+## Run simulations
+
+Chose the AI models by changing line 902 and 903 to the AI id. Example : makes player 1 use MinMax offensive:
+```
+asserta( player(1, computer, 3) ),
+```
+
+Then reload the program and run this command to simulate 100 games :
+```
+simulate(100).
+```
+
+Only the board when the game ends is shown, so it might not seam like it is running at first
+
 
 ## Main functions:
 
